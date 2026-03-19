@@ -90,7 +90,7 @@
 
         <!-- Login Form -->
         <div class="glass rounded-3xl p-8 shadow-2xl">
-            <form id="loginForm" onsubmit="handleLogin(event)">
+            <form id="loginForm" method="post" action="/auth/login">
                 <div class="mb-6">
                     <h2 class="text-xl font-bold mb-2" style="color:var(--text);">Welcome Back</h2>
                     <p class="text-sm" style="color:var(--muted);">Sign in to access your restaurant dashboard</p>
@@ -138,11 +138,14 @@
                 <!-- Remember Me & Forgot Password -->
                 <div class="flex items-center justify-between mb-6">
                     <div class="checkbox-wrapper">
-                        <div class="checkbox" id="rememberMeCheckbox" onclick="toggleCheckbox(this)"></div>
-                        <label for="rememberMeCheckbox" class="text-sm cursor-pointer" style="color:var(--muted);">Remember me</label>
+                        <input type="checkbox" id="remember-me" name="remember-me" class="form-check-input">
+                        <label for="remember-me" class="text-sm cursor-pointer ml-2" style="color:var(--muted);">Remember me</label>
                     </div>
                     <a href="#" onclick="handleForgotPassword(event)" class="text-sm hover:text-orange-500 transition-colors" style="color:var(--blue);">Forgot password?</a>
                 </div>
+
+                <!-- CSRF Token (will be added by Spring Security) -->
+                <input type="hidden" name="_csrf" th:if="${_csrf}" th:value="${_csrf.token}"/>
 
                 <!-- Submit Button -->
                 <button type="submit" id="loginButton" class="btn btn-p w-full text-sm font-black uppercase tracking-wider">
@@ -179,9 +182,6 @@
         // Initialize Lucide icons
         lucide.createIcons();
 
-        // Form state
-        let isSubmitting = false;
-
         // Toggle password visibility
         function togglePassword() {
             const passwordInput = document.getElementById('password');
@@ -197,9 +197,10 @@
             lucide.createIcons();
         }
 
-        // Toggle checkbox
-        function toggleCheckbox(checkbox) {
-            checkbox.classList.toggle('checked');
+        // Handle forgot password
+        function handleForgotPassword(event) {
+            event.preventDefault();
+            showToast('Password reset functionality will be available soon.', 'info');
         }
 
         // Show toast notification
@@ -228,182 +229,18 @@
             }, 5000);
         }
 
-        // Clear field errors
-        function clearFieldErrors() {
-            document.getElementById('username').classList.remove('error');
-            document.getElementById('password').classList.remove('error');
-            document.getElementById('usernameError').classList.add('hidden');
-            document.getElementById('passwordError').classList.add('hidden');
-        }
-
-        // Show field error
-        function showFieldError(fieldId, message) {
-            const field = document.getElementById(fieldId);
-            const errorElement = document.getElementById(fieldId + 'Error');
-            
-            field.classList.add('error');
-            errorElement.textContent = message;
-            errorElement.classList.remove('hidden');
-        }
-
-        // Set loading state v
-        function setLoading(loading) {
-            isSubmitting = loading;
-            const button = document.getElementById('loginButton');
-            const buttonText = document.getElementById('buttonText');
-            const buttonLoader = document.getElementById('buttonLoader');
-            
-            if (loading) {
-                button.disabled = true;
-                buttonText.textContent = 'Signing In...';
-                buttonLoader.classList.remove('hidden');
-            } else {
-                button.disabled = false;
-                buttonText.textContent = 'Sign In';
-                buttonLoader.classList.add('hidden');
-            }
-        }
-
-        // Handle login form submission
-        async function handleLogin(event) {
-            event.preventDefault();
-            
-            if (isSubmitting) return;
-            
-            clearFieldErrors();
-            
-            const username = document.getElementById('username').value.trim();
-            const password = document.getElementById('password').value;
-            const rememberMe = document.getElementById('rememberMeCheckbox').classList.contains('checked');
-            
-            // Basic validation
-            if (!username) {
-                showFieldError('username', 'Username is required');
-                return;
-            }
-            
-            if (!password) {
-                showFieldError('password', 'Password is required');
-                return;
-            }
-            
-            if (password.length < 6) {
-                showFieldError('password', 'Password must be at least 6 characters');
-                return;
-            }
-            
-            setLoading(true);
-            
-            try {
-                const response = await fetch('/api/auth/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        username: username,
-                        password: password,
-                        rememberMe: rememberMe
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    // Store tokens securely
-                    if (data.accessToken) {
-                        localStorage.setItem('accessToken', data.accessToken);
-                        if (data.refreshToken) {
-                            localStorage.setItem('refreshToken', data.refreshToken);
-                        }
-                        
-                        // Store user info
-                        if (data.admin) {
-                            localStorage.setItem('user', JSON.stringify(data.admin));
-                        }
-                        
-                        showToast('Login successful! Redirecting...', 'success');
-                        
-                        // Redirect to admin dashboard
-                        setTimeout(() => {
-                            window.location.href = '/admin/dashboard';
-                        }, 1500);
-                    } else {
-                        showToast('Invalid response from server', 'error');
-                    }
-                } else {
-                    // Handle error responses
-                    let errorMessage = 'Login failed';
-                    
-                    if (data.message) {
-                        errorMessage = data.message;
-                    } else if (data.error) {
-                        errorMessage = data.error;
-                    } else if (response.status === 401) {
-                        errorMessage = 'Invalid username or password';
-                    } else if (response.status === 400) {
-                        errorMessage = 'Invalid request format';
-                    } else if (response.status === 429) {
-                        errorMessage = 'Too many login attempts. Please try again later.';
-                    } else if (response.status >= 500) {
-                        errorMessage = 'Server error. Please try again later.';
-                    }
-                    
-                    showToast(errorMessage, 'error');
-                    
-                    // Show specific field errors if available
-                    if (data.fieldErrors) {
-                        Object.keys(data.fieldErrors).forEach(field => {
-                            showFieldError(field, data.fieldErrors[field]);
-                        });
-                    }
-                }
-            } catch (error) {
-                console.error('Login error:', error);
-                
-                let errorMessage = 'Network error. Please check your connection.';
-                
-                if (error.name === 'TypeError' && error.message.includes('fetch')) {
-                    errorMessage = 'Unable to connect to server. Please check your internet connection.';
-                }
-                
-                showToast(errorMessage, 'error');
-            } finally {
-                setLoading(false);
-            }
-        }
-
-        // Handle forgot password
-        function handleForgotPassword(event) {
-            event.preventDefault();
-            showToast('Password reset functionality will be available soon.', 'info');
-        }
-
-        // Add keyboard shortcuts
-        document.addEventListener('keydown', function(event) {
-            // Enter key submits form
-            if (event.key === 'Enter' && !isSubmitting) {
-                const form = document.getElementById('loginForm');
-                form.dispatchEvent(new Event('submit'));
-            }
-        });
-
         // Auto-focus username field on load
         window.addEventListener('load', function() {
             document.getElementById('username').focus();
-        });
-
-        // Check for existing session on load - REDIRECT TO DASHBOARD IF TOKEN EXISTS
-        window.addEventListener('load', function() {
-            const token = localStorage.getItem('accessToken');
-            if (token) {
-                // Redirect directly to dashboard if token exists
-                window.location.href = '/admin/dashboard';
-                return;
-            }
             
-            // If no token, show login page normally
-            console.log('No valid token found, showing login page');
+            // Check for error parameter and show message
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('error')) {
+                showToast('Invalid username or password', 'error');
+            }
+            if (urlParams.get('logout')) {
+                showToast('You have been logged out successfully', 'success');
+            }
         });
     </script>
 </body>

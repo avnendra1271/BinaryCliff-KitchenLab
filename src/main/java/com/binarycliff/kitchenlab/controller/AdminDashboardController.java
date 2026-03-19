@@ -36,7 +36,7 @@ public class AdminDashboardController {
             Admin admin = adminRepository.findByUsername(userDetails.getUsername())
                     .orElse(null);
             
-            if (admin != null) {
+            if (admin == null) {
                 return "redirect:/auth/login";
             }
             
@@ -56,6 +56,24 @@ public class AdminDashboardController {
         }
         
         return "redirect:/auth/login";
+    }
+    
+    /**
+     * SUPER_ADMIN specific dashboard.
+     */
+    @GetMapping("/super-dashboard")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public String superDashboard() {
+        return "admin/restaurant-admin-dashboard";
+    }
+    
+    /**
+     * RESTAURANT_ADMIN specific dashboard.
+     */
+    @GetMapping("/restaurant-dashboard")
+    @PreAuthorize("hasRole('RESTAURANT_ADMIN')")
+    public String restaurantDashboard() {
+        return "admin/kitchenlab-admin";
     }
     
     /**
@@ -79,7 +97,7 @@ public class AdminDashboardController {
     /**
      * Redirect root admin to role-appropriate dashboard.
      */
-    @GetMapping("")
+    @GetMapping("/")
     @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('RESTAURANT_ADMIN') or hasRole('MANAGER') or hasRole('STAFF')")
     public String adminRoot() {
         return dashboard();

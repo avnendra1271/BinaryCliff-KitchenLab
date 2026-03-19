@@ -2,6 +2,9 @@
 -- Fix Admin Table UUID Issues
 -- ════════════════════════════════════════════════════════════════
 
+-- Enable UUID extension
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 -- Drop existing tables to recreate with correct UUID configuration
 DROP TABLE IF EXISTS admin_permissions CASCADE;
 DROP TABLE IF EXISTS admins CASCADE;
