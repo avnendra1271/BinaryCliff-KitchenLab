@@ -28,10 +28,9 @@ public abstract class BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "id", columnDefinition = "BINARY(16)")
     private UUID id;
 
-    @Column(name = "restaurant_id", nullable = false, columnDefinition = "BINARY(16)")
+    @Column(name = "restaurant_id", nullable = false)
     private UUID restaurantId;
 
     @Column(name = "is_deleted", nullable = false)

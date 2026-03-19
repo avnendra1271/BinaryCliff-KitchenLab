@@ -64,7 +64,7 @@ public class AdminDashboardController {
     @GetMapping("/super-dashboard")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     public String superDashboard() {
-        return "admin/restaurant-admin-dashboard";
+        return "admin/Superadmin-admin-dashboard";
     }
     
     /**
