@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - BinarCliff KitchenLab</title>
+    <script src="/static/common/js/tailwindcss.js"></script>
+    <script>tailwind.config={theme:{extend:{colors:{brand:'#ea580c'}}}}</script>
+    <script src="/static/common/js/lucide.js"></script>
+    <link href="/static/common/css/googleapis.css" rel="stylesheet">
+    <style>
+        :root{
+            --bg:#080808;--bg2:#0f0f0f;--bg3:#141414;--card:#161616;
+            --border:rgba(255,255,255,.065);--border2:rgba(255,255,255,.04);
+            --text:#f1f5f9;--muted:rgba(241,245,249,.42);--muted2:rgba(241,245,249,.22);
+            --orange:#ea580c;--orange2:rgba(234,88,12,.12);--orange3:rgba(234,88,12,.06);
+            --green:#10b981;--green2:rgba(16,185,129,.12);
+            --blue:#3b82f6;--blue2:rgba(59,130,246,.12);
+            --purple:#8b5cf6;--purple2:rgba(139,92,246,.12);
+            --red:#ef4444;--red2:rgba(239,68,68,.12);
+            --amber:#f59e0b;--amber2:rgba(245,158,11,.12);
+            --shadow:0 0 0 1px var(--border),0 16px 48px -12px rgba(0,0,0,.8);
+            --shadow-lg:0 0 0 1px var(--border),0 32px 64px -16px rgba(0,0,0,.9);
+            --radius:20px;--radius-sm:14px;--radius-xs:10px;
+        }
+        
+        *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+        html,body{overscroll-behavior:none;scroll-behavior:smooth}
+        body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;font-size:13.5px;line-height:1.5;transition:background .4s,color .4s}
+        .serif{font-family:'Playfair Display',serif;font-style:italic}
+        ::-webkit-scrollbar{width:3px;height:3px}
+        ::-webkit-scrollbar-thumb{background:var(--orange);border-radius:4px}
+        ::-webkit-scrollbar-track{background:transparent}
+        
+        .btn{padding:10px 20px;border-radius:var(--radius-sm);font-weight:600;font-size:12px;border:none;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+        .btn-p{background:var(--orange);color:white}
+        .btn-p:hover{background:#dc2626;transform:translateY(-1px)}
+        .btn-g{background:var(--border2);color:var(--muted);border:1px solid var(--border)}
+        .btn-g:hover{background:var(--bg3);color:var(--text)}
+        .inp{width:100%;padding:12px 16px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:14px;transition:all .2s}
+        .inp:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px var(--orange3)}
+        .inp.error{border-color:var(--red);box-shadow:0 0 0 3px var(--red2)}
+        
+        .toast{padding:12px 16px;border-radius:var(--radius-sm);margin-bottom:8px;display:flex;align-items:center;gap:10px;animation:slideIn 0.3s ease-out}
+        .toast.success{background:var(--green2);color:var(--green);border:1px solid rgba(16,185,129,.25)}
+        .toast.error{background:var(--red2);color:var(--red);border:1px solid rgba(239,68,68,.25)}
+        .toast.info{background:var(--blue2);color:var(--blue);border:1px solid rgba(59,130,246,.25)}
+        
+        @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+        @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+        
+        .fade-in{animation:fadeIn 0.6s ease-out}
+        .pulse{animation:pulse 2s infinite}
+        
+        .glass{background:rgba(22,22,22,.8);backdrop-filter:blur(20px);border:1px solid var(--border)}
+        
+        .loading-spinner{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--orange);border-radius:50%;animation:spin 1s linear infinite}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        
+        .input-group{position:relative}
+        .input-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:20px;height:20px;color:var(--muted)}
+        .input-with-icon{padding-left:40px}
+        
+        .checkbox-wrapper{display:flex;align-items:center;gap:8px}
+        .checkbox{width:20px;height:20px;border:2px solid var(--border);border-radius:6px;background:var(--bg2);cursor:pointer;transition:all .2s;position:relative}
+        .checkbox.checked{background:var(--orange);border-color:var(--orange)}
+        .checkbox.checked::after{content:'✓';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:white;font-size:12px}
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center" style="background:linear-gradient(135deg,#080808 0%,#1a1a1a 100%);">
+    <!-- Background Pattern -->
+    <div class="absolute inset-0 opacity-10">
+        <div class="absolute inset-0" style="background-image:url('data:image/svg+xml,%3Csvg width=&quot;60&quot; height=&quot;60&quot; viewBox=&quot;0 0 60 60&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;%3E%3Cg fill=&quot;none&quot; fill-rule=&quot;evenodd&quot;%3E%3Cg fill=&quot;%23ea580c&quot; fill-opacity=&quot;0.1&quot;%3E%3Ccircle cx=&quot;7&quot; cy=&quot;7&quot; r=&quot;1&quot;/%3E%3C/g%3E%3C/svg%3E');"></div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="fixed top-5 right-5 z-50 flex flex-col gap-2"></div>
+
+    <!-- Login Container -->
+    <div class="relative z-10 w-full max-w-md mx-4 fade-in">
+        <!-- Logo Section -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl mb-4 pulse" style="background:linear-gradient(135deg,var(--orange),#f97316);">
+                <span class="text-3xl">🍴</span>
+            </div>
+            <h1 class="text-3xl font-black mb-2 serif" style="color:var(--text);">BinarCliff</h1>
+            <p class="text-sm" style="color:var(--muted);">KitchenLab Admin Portal</p>
+        </div>
+
+        <!-- Login Form -->
+        <div class="glass rounded-3xl p-8 shadow-2xl">
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="mb-6">
+                    <h2 class="text-xl font-bold mb-2" style="color:var(--text);">Welcome Back</h2>
+                    <p class="text-sm" style="color:var(--muted);">Sign in to access your restaurant dashboard</p>
+                </div>
+
+                <!-- Username Field -->
+                <div class="mb-4">
+                    <label class="block text-xs font-black uppercase tracking-widest mb-2" style="color:var(--muted);">Username</label>
+                    <div class="input-group">
+                        <i data-lucide="user" class="input-icon"></i>
+                        <input 
+                            type="text" 
+                            id="username" 
+                            name="username" 
+                            class="inp input-with-icon" 
+                            placeholder="Enter your username"
+                            required
+                            autocomplete="username"
+                        >
+                    </div>
+                    <span id="usernameError" class="text-xs mt-1 hidden" style="color:var(--red);"></span>
+                </div>
+
+                <!-- Password Field -->
+                <div class="mb-4">
+                    <label class="block text-xs font-black uppercase tracking-widest mb-2" style="color:var(--muted);">Password</label>
+                    <div class="input-group">
+                        <i data-lucide="lock" class="input-icon"></i>
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password" 
+                            class="inp input-with-icon" 
+                            placeholder="Enter your password"
+                            required
+                            autocomplete="current-password"
+                        >
+                        <button type="button" onclick="togglePassword()" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted hover:text-text transition-colors">
+                            <i data-lucide="eye" id="passwordToggle" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    <span id="passwordError" class="text-xs mt-1 hidden" style="color:var(--red);"></span>
+                </div>
+
+                <!-- Remember Me & Forgot Password -->
+                <div class="flex items-center justify-between mb-6">
+                    <div class="checkbox-wrapper">
+                        <div class="checkbox" id="rememberMeCheckbox" onclick="toggleCheckbox(this)"></div>
+                        <label for="rememberMeCheckbox" class="text-sm cursor-pointer" style="color:var(--muted);">Remember me</label>
+                    </div>
+                    <a href="#" onclick="handleForgotPassword(event)" class="text-sm hover:text-orange-500 transition-colors" style="color:var(--blue);">Forgot password?</a>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" id="loginButton" class="btn btn-p w-full text-sm font-black uppercase tracking-wider">
+                    <span id="buttonText">Sign In</span>
+                    <div id="buttonLoader" class="loading-spinner hidden"></div>
+                </button>
+
+                <!-- Security Notice -->
+                <div class="mt-6 p-3 rounded-xl" style="background:var(--orange2);border:1px solid rgba(234,88,12,.2);">
+                    <div class="flex items-start gap-2">
+                        <i data-lucide="shield-check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--orange);"></i>
+                        <div class="text-xs" style="color:var(--muted);">
+                            <strong>Secure Login:</strong> Your connection is encrypted and protected. Never share your credentials with anyone.
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-6">
+            <p class="text-xs" style="color:var(--muted2);">
+                © 2026 BinarCliff KitchenLab. All rights reserved.
+            </p>
+            <div class="flex items-center justify-center gap-4 mt-2">
+                <a href="#" class="text-xs hover:text-orange-500 transition-colors" style="color:var(--muted2);">Privacy Policy</a>
+                <span style="color:var(--muted2);">•</span>
+                <a href="#" class="text-xs hover:text-orange-500 transition-colors" style="color:var(--muted2);">Terms of Service</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Form state
+        let isSubmitting = false;
+
+        // Toggle password visibility
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const toggleIcon = document.getElementById('passwordToggle');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.setAttribute('data-lucide', 'eye-off');
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.setAttribute('data-lucide', 'eye');
+            }
+            lucide.createIcons();
+        }
+
+        // Toggle checkbox
+        function toggleCheckbox(checkbox) {
+            checkbox.classList.toggle('checked');
+        }
+
+        // Show toast notification
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            const icons = {
+                success: 'check-circle',
+                error: 'x-circle',
+                info: 'info'
+            };
+            
+            toast.innerHTML = `
+                <i data-lucide="${icons[type]}" class="w-5 h-5 flex-shrink-0"></i>
+                <span class="flex-1">${message}</span>
+            `;
+            
+            container.appendChild(toast);
+            lucide.createIcons();
+            
+            setTimeout(() => {
+                toast.style.animation = 'slideIn 0.3s ease-out reverse';
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
+        }
+
+        // Clear field errors
+        function clearFieldErrors() {
+            document.getElementById('username').classList.remove('error');
+            document.getElementById('password').classList.remove('error');
+            document.getElementById('usernameError').classList.add('hidden');
+            document.getElementById('passwordError').classList.add('hidden');
+        }
+
+        // Show field error
+        function showFieldError(fieldId, message) {
+            const field = document.getElementById(fieldId);
+            const errorElement = document.getElementById(fieldId + 'Error');
+            
+            field.classList.add('error');
+            errorElement.textContent = message;
+            errorElement.classList.remove('hidden');
+        }
+
+        // Set loading state
+        function setLoading(loading) {
+            isSubmitting = loading;
+            const button = document.getElementById('loginButton');
+            const buttonText = document.getElementById('buttonText');
+            const buttonLoader = document.getElementById('buttonLoader');
+            
+            if (loading) {
+                button.disabled = true;
+                buttonText.textContent = 'Signing In...';
+                buttonLoader.classList.remove('hidden');
+            } else {
+                button.disabled = false;
+                buttonText.textContent = 'Sign In';
+                buttonLoader.classList.add('hidden');
+            }
+        }
+
+        // Handle login form submission
+        async function handleLogin(event) {
+            event.preventDefault();
+            
+            if (isSubmitting) return;
+            
+            clearFieldErrors();
+            
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const rememberMe = document.getElementById('rememberMeCheckbox').classList.contains('checked');
+            
+            // Basic validation
+            if (!username) {
+                showFieldError('username', 'Username is required');
+                return;
+            }
+            
+            if (!password) {
+                showFieldError('password', 'Password is required');
+                return;
+            }
+            
+            if (password.length < 6) {
+                showFieldError('password', 'Password must be at least 6 characters');
+                return;
+            }
+            
+            setLoading(true);
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password,
+                        rememberMe: rememberMe
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Store tokens securely
+                    if (data.accessToken) {
+                        localStorage.setItem('accessToken', data.accessToken);
+                        if (data.refreshToken) {
+                            localStorage.setItem('refreshToken', data.refreshToken);
+                        }
+                        
+                        // Store user info
+                        if (data.admin) {
+                            localStorage.setItem('user', JSON.stringify(data.admin));
+                        }
+                        
+                        showToast('Login successful! Redirecting...', 'success');
+                        
+                        // Redirect to admin dashboard
+                        setTimeout(() => {
+                            window.location.href = '/admin/dashboard';
+                        }, 1500);
+                    } else {
+                        showToast('Invalid response from server', 'error');
+                    }
+                } else {
+                    // Handle error responses
+                    let errorMessage = 'Login failed';
+                    
+                    if (data.message) {
+                        errorMessage = data.message;
+                    } else if (data.error) {
+                        errorMessage = data.error;
+                    } else if (response.status === 401) {
+                        errorMessage = 'Invalid username or password';
+                    } else if (response.status === 400) {
+                        errorMessage = 'Invalid request format';
+                    } else if (response.status === 429) {
+                        errorMessage = 'Too many login attempts. Please try again later.';
+                    } else if (response.status >= 500) {
+                        errorMessage = 'Server error. Please try again later.';
+                    }
+                    
+                    showToast(errorMessage, 'error');
+                    
+                    // Show specific field errors if available
+                    if (data.fieldErrors) {
+                        Object.keys(data.fieldErrors).forEach(field => {
+                            showFieldError(field, data.fieldErrors[field]);
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                
+                let errorMessage = 'Network error. Please check your connection.';
+                
+                if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                    errorMessage = 'Unable to connect to server. Please check your internet connection.';
+                }
+                
+                showToast(errorMessage, 'error');
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        // Handle forgot password
+        function handleForgotPassword(event) {
+            event.preventDefault();
+            showToast('Password reset functionality will be available soon.', 'info');
+        }
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', function(event) {
+            // Enter key submits form
+            if (event.key === 'Enter' && !isSubmitting) {
+                const form = document.getElementById('loginForm');
+                form.dispatchEvent(new Event('submit'));
+            }
+        });
+
+        // Auto-focus username field on load
+        window.addEventListener('load', function() {
+            document.getElementById('username').focus();
+        });
+
+        // Check for existing session on load - REDIRECT TO DASHBOARD IF TOKEN EXISTS
+        window.addEventListener('load', function() {
+            const token = localStorage.getItem('accessToken');
+            if (token) {
+                // Redirect directly to dashboard if token exists
+                window.location.href = '/admin/dashboard';
+                return;
+            }
+            
+            // If no token, show login page normally
+            console.log('No valid token found, showing login page');
+        });
+    </script>
+</body>
+</html>

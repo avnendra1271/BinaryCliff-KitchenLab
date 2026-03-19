@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>BinarCliff — Restaurant Admin</title>
+    <script src="/static/common/js/tailwindcss.js"></script>
+<script>tailwind.config={theme:{extend:{colors:{brand:'#ea580c'}}}}</script>
+    <script src="/static/common/js/lucide.js"></script>
+    <link href="/static/common/css/googleapis.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/admin/css/kitchenlab-admin.css">
+</head>
+<body class="selection:bg-orange-600 selection:text-white" data-mode="desktop">
+
+<!-- ═══ INVOICE PRINT ═══ -->
+<div id="invoicePrint">
+  <div style="max-width:560px;margin:40px auto;font-family:'Plus Jakarta Sans',sans-serif;padding:40px;border:1px solid #e5e7eb;border-radius:16px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:24px;border-bottom:2px solid #f1f5f9;margin-bottom:28px">
+      <div><div style="font-size:20px;font-weight:900;color:#ea580c;letter-spacing:-.5px">🍴 Raj's Kitchen</div><div style="font-size:11px;color:#94a3b8;margin-top:3px">by BinarCliff · 42 MG Road, New Delhi 110001</div></div>
+      <div style="text-align:right"><div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#94a3b8">Invoice</div><div id="invId" style="font-size:18px;font-weight:900;color:#ea580c;margin-top:2px">#ORD-2841</div><div style="font-size:11px;color:#94a3b8">Mar 16, 2026</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px">
+      <div><div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#94a3b8;margin-bottom:6px">Bill To</div><div style="font-weight:700;font-size:14px;color:#0f172a">Priya Sharma</div><div style="font-size:12px;color:#64748b">+91 98765 43210</div><div style="font-size:12px;color:#64748b">42 MG Road, New Delhi</div></div>
+      <div><div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#94a3b8;margin-bottom:6px">Order Details</div><div style="font-size:12px;color:#64748b">Type: <b style="color:#0f172a">Delivery</b></div><div style="font-size:12px;color:#64748b">Payment: <b style="color:#0f172a">Online Paid</b></div><div style="font-size:12px;color:#64748b">Time: <b style="color:#0f172a">2:34 PM</b></div></div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:20px;font-size:13px"><thead><tr style="background:#f8fafc"><th style="padding:9px 12px;text-align:left;font-size:10px;font-weight:700;color:#94a3b8;border-bottom:1px solid #e2e8f0;text-transform:uppercase;letter-spacing:.06em">Item</th><th style="padding:9px 12px;text-align:center;font-size:10px;font-weight:700;color:#94a3b8;border-bottom:1px solid #e2e8f0;text-transform:uppercase">Qty</th><th style="padding:9px 12px;text-align:right;font-size:10px;font-weight:700;color:#94a3b8;border-bottom:1px solid #e2e8f0;text-transform:uppercase">Total</th></tr></thead><tbody><tr><td style="padding:10px 12px;border-bottom:1px solid #f1f5f9">Margherita Pizza<div style="font-size:11px;color:#94a3b8">Extra cheese</div></td><td style="padding:10px 12px;text-align:center;border-bottom:1px solid #f1f5f9">×1</td><td style="padding:10px 12px;text-align:right;font-weight:600;border-bottom:1px solid #f1f5f9">₹280</td></tr><tr><td style="padding:10px 12px">Mango Lassi<div style="font-size:11px;color:#94a3b8">No ice</div></td><td style="padding:10px 12px;text-align:center">×2</td><td style="padding:10px 12px;text-align:right;font-weight:600">₹120</td></tr></tbody></table>
+    <div style="display:flex;justify-content:flex-end"><div style="width:200px"><div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#64748b"><span>Subtotal</span><span>₹400</span></div><div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#64748b"><span>Tax (5%)</span><span>₹20</span></div><div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#64748b"><span>Delivery</span><span>₹45</span></div><div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#10b981;font-weight:600"><span>Discount (FIRST20)</span><span>−₹80</span></div><div style="display:flex;justify-content:space-between;padding:10px 0;font-size:16px;font-weight:900;border-top:2px solid #e2e8f0;margin-top:6px;color:#0f172a"><span>Grand Total</span><span style="color:#ea580c">₹385</span></div></div></div>
+    <div style="margin-top:28px;padding-top:16px;border-top:1px solid #e2e8f0;text-align:center;font-size:11px;color:#94a3b8">Thank you for dining with Raj's Kitchen · Powered by BinarCliff</div>
+  </div>
+</div>
+
+<!-- ═══ TOAST BOX ═══ -->
+<div id="toastBox" class="fixed right-5 z-[9999] flex flex-col gap-2 pointer-events-none" style="bottom:24px;min-width:260px;max-width:340px"></div>
+
+<!-- ═══ OVERLAY ═══ -->
+<div id="overlay" onclick="closeMobSidebar()"></div>
+
+<!-- ═══ NEW ORDER ALERT ═══ -->
+<div id="alertWrap">
+  <div id="alertCard">
+    <div class="flex items-center justify-between px-5 py-4 rounded-t-[26px]" style="background:var(--orange)">
+      <div class="flex items-center gap-3">
+        <div class="w-2.5 h-2.5 rounded-full bg-white ping"></div>
+        <div><div class="font-black text-sm uppercase tracking-wide text-white">🔔 New Order Arrived!</div><div class="text-[10px] text-white/70">Respond within the timer</div></div>
+      </div>
+      <div id="alertCD" class="w-11 h-11 rounded-full flex items-center justify-center font-black text-lg text-white" style="background:rgba(255,255,255,.18)">20</div>
+    </div>
+    <div class="p-5">
+      <div class="text-xs mb-3" style="color:var(--muted)">Order <strong style="color:var(--text)">#ORD-2847</strong> · Just now</div>
+      <div class="grid grid-cols-2 gap-3 mb-4">
+        <div class="p-3 rounded-2xl" style="background:var(--border2)"><div class="text-[9px] uppercase tracking-widest font-black mb-1" style="color:var(--muted2)">Customer</div><div class="font-black text-sm" style="color:var(--text)">Aryan Mehta</div></div>
+        <div class="p-3 rounded-2xl" style="background:var(--border2)"><div class="text-[9px] uppercase tracking-widest font-black mb-1" style="color:var(--muted2)">Items</div><div class="font-black text-sm" style="color:var(--text)">3 Items</div></div>
+        <div class="p-3 rounded-2xl" style="background:var(--orange2)"><div class="text-[9px] uppercase tracking-widest font-black mb-1" style="color:var(--muted2)">Total</div><div class="font-black text-sm text-orange-500">₹485</div></div>
+        <div class="p-3 rounded-2xl" style="background:var(--border2)"><div class="text-[9px] uppercase tracking-widest font-black mb-1" style="color:var(--muted2)">Type</div><div class="font-black text-sm" style="color:var(--text)">🛵 Delivery</div></div>
+      </div>
+      <div class="progress-track mb-4"><div id="alertBar" class="h-full rounded-full transition-none" style="background:var(--orange);width:100%"></div></div>
+      <div class="grid grid-cols-2 gap-2">
+        <button onclick="acceptAlert()" class="btn btn-p justify-center py-3 text-[10px]"><i data-lucide="check" style="width:13px;height:13px"></i>Accept Order</button>
+        <button onclick="rejectAlert()" class="btn btn-d justify-center py-3 text-[10px]"><i data-lucide="x" style="width:13px;height:13px"></i>Reject</button>
+        <button onclick="closeAlert();navTo('orders',null)" class="btn btn-g justify-center py-3 text-[10px] col-span-2"><i data-lucide="eye" style="width:13px;height:13px"></i>View Full Details</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ORDER DRAWER ═══ -->
+<div id="drawerBg" onclick="closeDrawer()"></div>
+<div id="drawer">
+  <div class="flex items-center justify-between px-6 py-4 flex-shrink-0" style="border-bottom:1px solid var(--border)">
+    <div>
+      <div class="font-black text-xl tracking-tight" style="color:var(--text)">#ORD-2841</div>
+      <div class="flex items-center gap-2 mt-0.5">
+        <span class="text-xs" style="color:var(--muted)">Today · 2:34 PM</span>
+        <span id="drawerStatus" class="badge bpr">● Preparing</span>
+      </div>
+    </div>
+    <button onclick="closeDrawer()" class="w-9 h-9 rounded-2xl flex items-center justify-center transition-all group" style="background:var(--border2);color:var(--muted)" onmouseenter="this.style.background='var(--orange)';this.style.color='#fff'" onmouseleave="this.style.background='var(--border2)';this.style.color='var(--muted)'"><i data-lucide="x" style="width:16px;height:16px"></i></button>
+  </div>
+  <div class="flex-1 overflow-y-auto noscroll">
+    <!-- Order Info -->
+    <div class="px-6 py-4" style="border-bottom:1px solid var(--border)">
+      <div class="sec-label px-0 pb-3 pt-0">Order Information</div>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="p-3 rounded-2xl" style="background:var(--border2)"><div class="text-[10px] mb-1" style="color:var(--muted)">Order ID</div><div class="font-bold text-sm" style="color:var(--text)">#ORD-2841</div></div>
+        <div class="p-3 rounded-2xl" style="background:var(--border2)"><div class="text-[10px] mb-1" style="color:var(--muted)">Type</div><div class="font-bold text-sm" style="color:var(--text)">🛵 Delivery</div></div>
+        <div class="p-3 rounded-2xl" style="background:var(--border2)"><div class="text-[10px] mb-1" style="color:var(--muted)">Date</div><div class="font-bold text-sm" style="color:var(--text)">Mar 16, 2026</div></div>
+        <div class="p-3 rounded-2xl" style="background:var(--border2)"><div class="text-[10px] mb-1" style="color:var(--muted)">Payment</div><div class="font-bold text-sm" style="color:var(--text)">💳 Online Paid</div></div>
+      </div>
+    </div>
+    <!-- Customer -->
+    <div class="px-6 py-4" style="border-bottom:1px solid var(--border)">
+      <div class="sec-label px-0 pb-3 pt-0">Customer</div>
+      <div class="grid grid-cols-2 gap-3 mb-3">
+        <div><div class="text-xs mb-0.5" style="color:var(--muted)">Name</div><div class="font-bold text-sm" style="color:var(--text)">Priya Sharma</div></div>
+        <div><div class="text-xs mb-0.5" style="color:var(--muted)">Phone</div><div class="font-bold text-sm" style="color:var(--text)">+91 98765 43210</div></div>
+        <div class="col-span-2"><div class="text-xs mb-0.5" style="color:var(--muted)">Delivery Address</div><div class="font-bold text-sm leading-relaxed" style="color:var(--text)">42 MG Road, Connaught Place, New Delhi 110001</div></div>
+      </div>
+    </div>
+    <!-- Items -->
+    <div class="px-6 py-4" style="border-bottom:1px solid var(--border)">
+      <div class="sec-label px-0 pb-3 pt-0">Items Ordered</div>
+      <div class="space-y-2">
+        <div class="flex items-center gap-3 p-3 rounded-2xl" style="background:var(--border2)"><div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0" style="background:var(--orange2)">🍕</div><div class="flex-1"><div class="font-bold text-sm" style="color:var(--text)">Margherita Pizza</div><div class="text-xs" style="color:var(--muted)">Extra cheese · ×1</div></div><div class="font-black text-sm" style="color:var(--text)">₹280</div></div>
+        <div class="flex items-center gap-3 p-3 rounded-2xl" style="background:var(--border2)"><div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0" style="background:var(--green2)">🥤</div><div class="flex-1"><div class="font-bold text-sm" style="color:var(--text)">Mango Lassi</div><div class="text-xs" style="color:var(--muted)">No ice · ×2</div></div><div class="font-black text-sm" style="color:var(--text)">₹120</div></div>
+      </div>
+    </div>
+    <!-- Price Breakdown -->
+    <div class="px-6 py-4" style="border-bottom:1px solid var(--border)">
+      <div class="sec-label px-0 pb-3 pt-0">Price Breakdown</div>
+      <div class="space-y-2 text-sm">
+        <div class="flex justify-between" style="color:var(--muted)"><span>Subtotal</span><span>₹400</span></div>
+        <div class="flex justify-between" style="color:var(--muted)"><span>Tax (5%)</span><span>₹20</span></div>
+        <div class="flex justify-between" style="color:var(--muted)"><span>Delivery Fee</span><span>₹45</span></div>
+        <div class="flex justify-between font-bold text-emerald-400"><span>Discount (FIRST20)</span><span>−₹80</span></div>
+        <div class="flex justify-between font-black text-base pt-2.5 mt-1" style="border-top:1px solid var(--border);color:var(--text)"><span>Grand Total</span><span class="text-orange-500">₹385</span></div>
+      </div>
+    </div>
+    <!-- Timeline -->
+    <div class="px-6 py-4" style="border-bottom:1px solid var(--border)">
+      <div class="sec-label px-0 pb-3 pt-0">Order Timeline</div>
+      <div class="relative pl-5">
+        <div class="absolute left-[6px] top-2 bottom-2 w-0.5" style="background:var(--border)"></div>
+        <div class="space-y-4">
+          <div class="relative"><div class="absolute -left-5 top-0.5 w-3 h-3 rounded-full bg-emerald-500" style="border:2px solid var(--card)"></div><div class="text-[10px]" style="color:var(--muted)">2:34 PM</div><div class="text-sm font-bold" style="color:var(--text)">Order placed</div></div>
+          <div class="relative"><div class="absolute -left-5 top-0.5 w-3 h-3 rounded-full bg-emerald-500" style="border:2px solid var(--card)"></div><div class="text-[10px]" style="color:var(--muted)">2:36 PM</div><div class="text-sm font-bold" style="color:var(--text)">Accepted</div></div>
+          <div class="relative"><div class="absolute -left-5 top-0.5 w-3 h-3 rounded-full bg-orange-500 ping" style="border:2px solid var(--card)"></div><div class="text-[10px]" style="color:var(--muted)">2:38 PM</div><div class="text-sm font-bold text-orange-500">Preparing</div></div>
+          <div class="relative opacity-25"><div class="absolute -left-5 top-0.5 w-3 h-3 rounded-full" style="background:var(--border);border:2px solid var(--card)"></div><div class="text-[10px]" style="color:var(--muted)">—</div><div class="text-sm font-bold" style="color:var(--text)">Ready for pickup</div></div>
+          <div class="relative opacity-25"><div class="absolute -left-5 top-0.5 w-3 h-3 rounded-full" style="background:var(--border);border:2px solid var(--card)"></div><div class="text-[10px]" style="color:var(--muted)">—</div><div class="text-sm font-bold" style="color:var(--text)">Delivered</div></div>
+        </div>
+      </div>
+    </div>
+    <!-- Update Status -->
+    <div class="px-6 py-4">
+      <div class="sec-label px-0 pb-3 pt-0">Update Status</div>
+      <div class="flex flex-wrap gap-2">
+        <button onclick="setStatus('Pending','bp')" class="px-3 py-1.5 text-[10px] font-black uppercase rounded-full transition-all hover:opacity-80" style="background:rgba(249,115,22,.14);color:#fb923c;border:1px solid rgba(249,115,22,.25)">Pending</button>
+        <button onclick="setStatus('Accepted','ba')" class="px-3 py-1.5 text-[10px] font-black uppercase rounded-full transition-all hover:opacity-80" style="background:var(--blue2);color:#60a5fa;border:1px solid rgba(59,130,246,.25)">Accepted</button>
+        <button onclick="setStatus('Preparing','bpr')" class="px-3 py-1.5 text-[10px] font-black uppercase rounded-full transition-all hover:opacity-80" style="background:var(--amber2);color:#fcd34d;border:1px solid rgba(245,158,11,.25)">Preparing</button>
+        <button onclick="setStatus('Ready','brd')" class="px-3 py-1.5 text-[10px] font-black uppercase rounded-full transition-all hover:opacity-80" style="background:var(--green2);color:#34d399;border:1px solid rgba(16,185,129,.25)">Ready</button>
+        <button onclick="setStatus('Delivered','bdl')" class="px-3 py-1.5 text-[10px] font-black uppercase rounded-full transition-all hover:opacity-80" style="background:var(--purple2);color:#a78bfa;border:1px solid rgba(139,92,246,.25)">Delivered</button>
+        <button onclick="setStatus('Cancelled','bc')" class="px-3 py-1.5 text-[10px] font-black uppercase rounded-full transition-all hover:opacity-80" style="background:var(--red2);color:#f87171;border:1px solid rgba(239,68,68,.25)">Cancelled</button>
+      </div>
+    </div>
+  </div>
+  <div class="flex-shrink-0 px-5 py-4 flex items-center gap-2 flex-wrap no-print" style="border-top:1px solid var(--border);background:var(--bg2)">
+    <button onclick="setStatus('Accepted','ba')" class="btn btn-sm flex items-center gap-1" style="background:var(--green2);color:#34d399;border:1px solid rgba(16,185,129,.25)"><i data-lucide="check-circle" style="width:13px;height:13px"></i>Accept</button>
+    <button onclick="setStatus('Cancelled','bc')" class="btn btn-d btn-sm flex items-center gap-1"><i data-lucide="x-circle" style="width:13px;height:13px"></i>Reject</button>
+    <button onclick="openModal('riderModal')" class="btn btn-g btn-sm flex items-center gap-1"><i data-lucide="bike" style="width:13px;height:13px"></i>Assign Rider</button>
+    <div class="ml-auto flex gap-1.5">
+      <button onclick="downloadInvoice()" class="btn btn-g btn-sm flex items-center gap-1"><i data-lucide="download" style="width:13px;height:13px"></i>Download</button>
+      <button onclick="printInv()" class="btn btn-p btn-sm flex items-center gap-1"><i data-lucide="printer" style="width:13px;height:13px"></i>Print</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODALS ═══ -->
+
+<!-- Category Modal -->
+<div id="catModal" class="modal-bg">
+  <div class="modal">
+    <div class="sticky top-0 px-6 py-4 flex items-center justify-between rounded-t-[28px]" style="background:var(--card);border-bottom:1px solid var(--border);z-index:1">
+      <div class="font-black text-lg serif" id="catModalTitle" style="color:var(--text)">Add Category</div>
+      <button onclick="closeModal('catModal')" class="w-8 h-8 rounded-xl flex items-center justify-center transition-all" style="background:var(--border2);color:var(--muted)" onmouseenter="this.style.background='var(--orange)';this.style.color='#fff'" onmouseleave="this.style.background='var(--border2)';this.style.color='var(--muted)'"><i data-lucide="x" style="width:14px;height:14px"></i></button>
+    </div>
+    <div class="px-6 py-5 space-y-4">
+      <div><label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" style="color:var(--muted)">Category Name <span class="text-orange-500">*</span></label><input id="cName" class="inp" placeholder="e.g. Starters, Main Course…"/></div>
+      <div><label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" style="color:var(--muted)">Description</label><textarea id="cDesc" class="inp" placeholder="Brief description…"></textarea></div>
+      <div><label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" style="color:var(--muted)">Emoji Icon</label><input id="cEmoji" class="inp" placeholder="🍕" maxlength="4" style="font-size:22px;height:52px"/></div>
+      <div class="grid grid-cols-2 gap-4">
+        <div><label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" style="color:var(--muted)">Display Order</label><input id="cOrder" type="number" class="inp" placeholder="1"/></div>
+        <div><label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" style="color:var(--muted)">Status</label><div class="flex items-center gap-3 mt-3"><div class="tog on" id="catTog" onclick="this.classList.toggle('on')"></div><span class="text-sm font-medium" style="color:var(--text)">Active</span></div></div>
+      </div>
+      <div><label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" style="color:var(--muted)">Category Image</label>
+        <div class="rounded-2xl p-6 text-center cursor-pointer transition-all" style="border:1.5px dashed rgba(234,88,12,.3)" onclick="document.getElementById('catFile').click()" onmouseenter="this.style.background='var(--orange3)'" onmouseleave="this.style.background='transparent'">
+          <i data-lucide="image-plus" style="width:28px;height:28px;color:var(--muted);margin:0 auto 8px"></i>
+          <div class="text-sm font-semibold" style="color:var(--muted)">Click to upload</div>
+          <div class="text-[10px] mt-1" style="color:var(--muted2)">PNG, JPG · Max 2MB</div>
+        </div>
+        <input id="catFile" type="file" class="hidden" accept="image/*" onchange="prevImg(this,'catPrev')"/>
+        <img id="catPrev" class="hidden mt-2 w-full h-28 object-cover rounded-2xl"/>
+      </div>
+    </div>
+    <div class="px-6 py-4 flex justify-end gap-2 rounded-b-[28px]" style="border-top:1px solid var(--border);background:var(--bg2)">
+      <button onclick="closeModal('catModal')" class="btn btn-g">Cancel</button>
+      <button onclick="saveCat()" class="btn btn-p"><i data-lucide="save" style="width:14px;height:14px"></i>Save Category</button>
+    </div>
+  </div>
+</div>
+
+<!-- Item Modal -->
+<div id="itemModal" class="modal-bg">
+  <div class="modal" style="max-width:640px">
+    <div class="sticky top-0 px-6 py-4 flex items-center justify-between rounded-t-[28px]" style="background:var(--card);border-bottom:1px solid var(--border);z-index:1">
+      <div class="font-black text-lg serif" id="itemModalTitle" style="color:var(--text)">Add Menu Item</div>
+      <button onclick="closeModal('itemModal')" class="w-8 h-8 rounded-xl flex items-center justify-center" style="background:var(--border2);color:var(--muted)" onmouseenter="this.style.background='var(--orange)';this.style.color='#fff'" onmouseleave="this.style.background='var(--border2)';this.style.color='var(--muted)'"><i data-lucide="x" style="width:14px;height:14px"></i></button>
+    </div>
+    <div class="px-6 py-5 space-y-7">
+      <div>
+        <div class="flex items-center gap-2 mb-4 pb-2" style="border-bottom:1px solid var(--border2)"><i data-lucide="clipboard-list" style="width:13px;height:13px;color:var(--orange)"></i><span class="text-[10px] font-black uppercase tracking-widest" style="color:var(--orange)">Basic Information</span></div>
+        <div class="grid grid-cols-2 gap-4 mb-4">
+          <div><label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" style="color:var(--muted)">Item Name <span class="text-orange-500">*</span></label><input id="iName" class="inp" placeholder="e.g. Butter Chicken"/></div>
+          <div><label class="block text-[10px] font-black uppercase tracking-widests mb-1.5" style="color:var(--muted)">Category <span class="text-orange-500">*</span></label><select id="iCat" class="inp"><option value="">Select Category</option><option>Pizza</option><option>Main Course</option><option>Starters</option><option>Beverages</option><option>Desserts</option></select></div>
+        </div>
+        <div class="mb-4"><label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" style="color:var(--muted)">Description</label><textarea id="iDesc" class="inp" placeholder="Describe the dish…"></textarea></div>
+        <div><label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" style="color:var(--muted)">Item Image</label>
+          <div class="rounded-2xl p-5 text-center cursor-pointer transition-all" style="border:1.5px dashed rgba(234,88,12,.3)" onclick="document.getElementById('itemFile').click()" onmouseenter="this.style.background='var(--orange3)'" onmouseleave="this.style.background='transparent'">
+            <i data-lucide="upload-cloud" style="width:24px;height:24px;color:var(--muted);margin:0 auto 6px"></i>
+            <div class="text-xs font-semibold" style="color:var(--muted)">Upload food photo · 800×600 recommended</div>
+          </div>
+          <input id="itemFile" type="file" class="hidden" accept="image/*" onchange="prevImg(this,'itemPrev')"/>
+          <img id="itemPrev" class="hidden mt-2 w-full h-32 object-cover rounded-2xl"/>
+        </div>
+      </div>
+      <div>
+        <div class="flex items-center gap-2 mb-4 pb-2" style="border-bottom:1px solid var(--border2)"><i data-lucide="indian-rupee" style="width:13px;height:13px;color:var(--orange)"></i><span class="text-[10px] font-black uppercase tracking-widest" style="color:var(--orange)">Pricing & Tax</span></div>
+        <div class="grid grid-cols-3 gap-4">
+          <div><label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" style="color:var(--muted)">Base Price <span class="text-orange-500">*</span></label><input id="iPrice" type="number" class="inp" placeholder="₹0"/></div>
+          <div><label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" style="color:var(--muted)">Discount Price</label><input id="iDisc" type="number" class="inp" placeholder="₹0"/></div>
+          <div><label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" style="color:var(--muted)">Tax Category</label><select id="iTax" class="inp"><option>5% GST</option><option>12% GST</option><option>18% GST</option><option>No Tax</option></select></div>
+        </div>
+      </div>
+      <div>
+        <div class="flex items-center gap-2 mb-4 pb-2" style="border-bottom:1px solid var(--border2)"><i data-lucide="tag" style="width:13px;height:13px;color:var(--orange)"></i><span class="text-[10px] font-black uppercase tracking-widest" style="color:var(--orange)">Food Tags</span></div>
+        <div class="flex flex-wrap gap-2" id="tagWrap">
+          <button class="tag-btn px-3 py-1.5 text-[10px] font-black uppercase rounded-full transition-all" style="background:var(--border2);color:var(--muted);border:1px solid var(--border)" data-tag="veg" onclick="toggleTag(this)">🟢 Vegetarian</button>
+          <button class="tag-btn px-3 py-1.5 text-[10px] font-black uppercase rounded-full transition-all" style="background:var(--border2);color:var(--muted);border:1px solid var(--border)" data-tag="nonveg" onclick="toggleTag(this)">🔴 Non-Veg</button>
+          <button class="tag-btn px-3 py-1.5 text-[10px] font-black uppercase rounded-full transition-all" style="background:var(--border2);color:var(--muted);border:1px solid var(--border)" data-tag="popular" onclick="toggleTag(this)">⭐ Popular</button>
+          <button class="tag-btn px-3 py-1.5 text-[10px] font-black uppercase rounded-full transition-all" style="background:var(--border2);color:var(--muted);border:1px solid var(--border)" data-tag="chef" onclick="toggleTag(this)">👨‍🍳 Chef Special</button>
+          <button class="tag-btn px-3 py-1.5 text-[10px] font-black uppercase rounded-full transition-all" style="background:var(--border2);color:var(--muted);border:1px solid var(--border)" data-tag="spicy" onclick="toggleTag(this)">🌶️ Spicy</button>
+        </div>
+      </div>
+      <div>
+        <div class="flex items-center gap-2 mb-4 pb-2" style="border-bottom:1px solid var(--border2)"><i data-lucide="clock" style="width:13px;height:13px;color:var(--orange)"></i><span class="text-[10px] font-black uppercase tracking-widest" style="color:var(--orange)">Availability</span></div>
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" style="color:var(--muted)">Prep Time (mins)</label><input id="iPrep" type="number" class="inp" placeholder="15"/></div>
+          <div><label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" style="color:var(--muted)">Status</label><div class="flex items-center gap-3 mt-3"><div class="tog on" id="itemTog" onclick="this.classList.toggle('on')"></div><span class="text-sm font-medium" style="color:var(--text)">Available</span></div></div>
+        </div>
+      </div>
+      <div>
+        <div class="flex items-center gap-2 mb-3 pb-2" style="border-bottom:1px solid var(--border2)"><i data-lucide="layers" style="width:13px;height:13px;color:var(--orange)"></i><span class="text-[10px] font-black uppercase tracking-widest" style="color:var(--orange)">Variants</span></div>
+        <div id="varList" class="space-y-2 mb-2"></div>
+        <button onclick="addRow('varList','Variant name')" class="btn btn-g btn-xs flex items-center gap-1"><i data-lucide="plus" style="width:11px;height:11px"></i>Add Variant</button>
+      </div>
+      <div>
+        <div class="flex items-center gap-2 mb-3 pb-2" style="border-bottom:1px solid var(--border2)"><i data-lucide="plus-circle" style="width:13px;height:13px;color:var(--orange)"></i><span class="text-[10px] font-black uppercase tracking-widest" style="color:var(--orange)">Add-ons</span></div>
+        <div id="addList" class="space-y-2 mb-2"></div>
+        <button onclick="addRow('addList','Add-on name')" class="btn btn-g btn-xs flex items-center gap-1"><i data-lucide="plus" style="width:11px;height:11px"></i>Add Add-on</button>
+      </div>
+    </div>
+    <div class="px-6 py-4 flex justify-end gap-2 rounded-b-[28px]" style="border-top:1px solid var(--border);background:var(--bg2)">
+      <button onclick="closeModal('itemModal')" class="btn btn-g">Cancel</button>
+      <button onclick="saveItem(true)" class="btn btn-g">Save & Add Another</button>
+      <button onclick="saveItem(false)" class="btn btn-p"><i data-lucide="save" style="width:14px;height:14px"></i>Save Item</button>
+    </div>
+  </div>
+</div>
+
+<!-- Coupon Modal -->
+<div id="couponModal" class="modal-bg">
+  <div class="modal">
+    <div class="sticky top-0 px-6 py-4 flex items-center justify-between rounded-t-[28px]" style="background:var(--card);border-bottom:1px solid var(--border);z-index:1">
+      <div class="font-black text-lg serif" id="couponTitle" style="color:var(--text)">Create Coupon</div>
+      <button onclick="closeModal('couponModal')" class="w-8 h-8 rounded-xl flex items-center justify-center" style="background:var(--border2);color:var(--muted)" onmouseenter="this.style.background='var(--orange)';this.style.color='#fff'" onmouseleave="this.style.background='var(--border2)';this.style.color='var(--muted)'"><i data-lucide="x" style="width:14px;height:14px"></i></button>
+    </div>
+    <div class="px-6 py-5 space-y-4">
+      <div><label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" style="color:var(--muted)">Coupon Code <span class="text-orange-500">*</span></label><input id="cpCode" class="inp font-black tracking-widest uppercase" style="font-size:16px;height:48px;letter-spacing:.15em" placeholder="e.g. SAVE20"/></div>
+      <div class="grid grid-cols-2 gap-4">
+        <div><label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" style="color:var(--muted)">Discount Type</label><select id="cpType" class="inp"><option>Percentage %</option><option>Flat ₹</option></select></div>
+        <div><label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" style="color:var(--muted)">Value <span class="text-orange-500">*</span></label><input id="cpVal" type="number" class="inp" placeholder="20"/></div>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div><label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" style="color:var(--muted)">Min Order Value</label><input id="cpMin" class="inp" placeholder="₹200"/></div>
+        <div><label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" style="color:var(--muted)">Max Discount</label><input id="cpMax" class="inp" placeholder="₹100"/></div>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div><label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" style="color:var(--muted)">Total Usage Limit</label><input id="cpLimit" type="number" class="inp" placeholder="100"/></div>
+        <div><label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" style="color:var(--muted)">Per User Limit</label><input id="cpUser" type="number" class="inp" placeholder="1"/></div>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div><label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" style="color:var(--muted)">Start Date</label><input id="cpStart" type="date" class="inp"/></div>
+        <div><label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" style="color:var(--muted)">Expiry Date</label><input id="cpEnd" type="date" class="inp"/></div>
+      </div>
+    </div>
+    <div class="px-6 py-4 flex justify-end gap-2 rounded-b-[28px]" style="border-top:1px solid var(--border);background:var(--bg2)">
+      <button onclick="closeModal('couponModal')" class="btn btn-g">Cancel</button>
+      <button onclick="saveCoupon()" class="btn btn-p"><i data-lucide="ticket" style="width:14px;height:14px"></i>Save Coupon</button>
+    </div>
+  </div>
+</div>
+
+<!-- Profile Modal -->
+<div id="profileModal" class="modal-bg">
+  <div class="modal" style="max-width:600px">
+    <div class="px-6 pt-6 pb-0" style="border-bottom:1px solid var(--border)">
+      <div class="flex items-center justify-between mb-5">
+        <div class="flex items-center gap-4">
+          <div class="relative">
+            <div id="pAvatar" class="w-[68px] h-[68px] rounded-2xl flex items-center justify-center text-white font-black text-2xl" style="background:linear-gradient(135deg,var(--orange),#f97316)">RS</div>
+            <button onclick="document.getElementById('avatarFile').click()" class="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-full flex items-center justify-center text-white shadow-lg" style="background:var(--orange)"><i data-lucide="camera" style="width:12px;height:12px"></i></button>
+            <input id="avatarFile" type="file" class="hidden" accept="image/*" onchange="changeAvatar(this)"/>
+          </div>
+          <div>
+            <div class="font-black text-xl leading-tight serif" id="pRestDisp" style="color:var(--text)">Raj's Kitchen</div>
+            <div class="text-xs mt-0.5" style="color:var(--muted)">Owner Account · BinarCliff Platform</div>
+            <div class="text-xs text-emerald-400 flex items-center gap-1 mt-1"><i data-lucide="shield-check" style="width:11px;height:11px"></i>Verified Restaurant</div>
+          </div>
+        </div>
+        <button onclick="closeModal('profileModal')" class="w-8 h-8 rounded-xl flex items-center justify-center self-start" style="background:var(--border2);color:var(--muted)" onmouseenter="this.style.background='var(--orange)';this.style.color='#fff'" onmouseleave="this.style.background='var(--border2)';this.style.color='var(--muted)'"><i data-lucide="x" style="width:14px;height:14px"></i></button>
+      </div>
+      <div class="flex overflow-x-auto noscroll -mb-px">
+        <div class="ptab on" onclick="switchPTab(this,'pTab1')"><i data-lucide="user" style="width:12px;height:12px;display:inline;margin-right:5px;vertical-align:-1px"></i>Personal</div>
+        <div class="ptab" onclick="switchPTab(this,'pTab2')"><i data-lucide="store" style="width:12px;height:12px;display:inline;margin-right:5px;vertical-align:-1px"></i>Restaurant</div>
+        <div class="ptab" onclick="switchPTab(this,'pTab3')"><i data-lucide="clock-4" style="width:12px;height:12px;display:inline;margin-right:5px;vertical-align:-1px"></i>Hours & Settings</div>
+        <div class="ptab" onclick="switchPTab(this,'pTab4')"><i data-lucide="shield" style="width:12px;height:12px;display:inline;margin-right:5px;vertical-align:-1px"></i>Security</div>
+      </div>
+    </div>
+    <div class="overflow-y-auto noscroll" style="max-height:56vh">
+      <div id="pTab1" class="ppane on px-6 py-5 space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" style="color:var(--muted)">Full Name</label><input id="pName" class="inp" value="Raj Kumar"/></div>
+          <div><label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" style="color:var(--muted)">Phone</label><input id="pPhone" class="inp" value="+91 98765 00001"/></div>
+        </div>
+        <div><label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" style="color:var(--muted)">Email Address</label><input id="pEmail" class="inp" value="raj@rajskitchen.com"/></div>
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" style="color:var(--muted)">Role</label><input class="inp opacity-40 cursor-not-allowed" value="Restaurant Owner" readonly/></div>
+          <div><label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" style="color:var(--muted)">Language</label><select class="inp"><option>English</option><option>Hindi</option><option>Tamil</option><option>Bengali</option></select></div>
+        </div>
+        <div><label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" style="color:var(--muted)">Short Bio</label><textarea class="inp" placeholder="A few words about you…" style="min-height:60px"></textarea></div>
+      </div>
+      <div id="pTab2" class="ppane px-6 py-5 space-y-4">
+        <div><label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" style="color:var(--muted)">Restaurant Name</label><input id="pRestName" class="inp" value="Raj's Kitchen" oninput="document.getElementById('pRestDisp').textContent=this.value;document.getElementById('sbName').textContent=this.value;document.getElementById('topbarName').textContent=this.value"/></div>
+        <div><label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" style="color:var(--muted)">Full Address</label><textarea id="pAddr" class="inp" style="min-height:60px">42 MG Road, Connaught Place, New Delhi 110001</textarea></div>
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" style="color:var(--muted)">City</label><input class="inp" value="New Delhi"/></div>
+          <div><label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" style="color:var(--muted)">Pincode</label><input class="inp" value="110001"/></div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" style="color:var(--muted)">Cuisine Type</label><input class="inp" value="North Indian, Italian"/></div>
+          <div><label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" style="color:var(--muted)">FSSAI License</label><input class="inp" value="13323001000041"/></div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" style="color:var(--muted)">GST Number</label><input class="inp" value="07AABCU9603R1ZX"/></div>
+          <div><label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" style="color:var(--muted)">Avg Prep Time</label><input class="inp" value="18 mins"/></div>
+        </div>
+        <div><label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" style="color:var(--muted)">Restaurant Banner</label>
+          <div class="rounded-2xl p-5 text-center cursor-pointer transition-all" style="border:1.5px dashed rgba(234,88,12,.3)" onclick="document.getElementById('bannerFile').click()" onmouseenter="this.style.background='var(--orange3)'" onmouseleave="this.style.background='transparent'">
+            <i data-lucide="image" style="width:22px;height:22px;color:var(--muted);margin:0 auto 5px"></i>
+            <div class="text-xs font-semibold" style="color:var(--muted)">Upload banner (1200×400px recommended)</div>
+          </div>
+          <input id="bannerFile" type="file" class="hidden" accept="image/*"/>
+        </div>
+      </div>
+      <div id="pTab3" class="ppane px-6 py-5 space-y-5">
+        <div>
+          <div class="text-[10px] font-black uppercase tracking-widest mb-4" style="color:var(--orange)">Operating Hours</div>
+          <div class="space-y-3">
+            <div class="flex items-center gap-3"><div class="text-sm font-semibold w-20 flex-shrink-0" style="color:var(--text)">Mon – Fri</div><input type="time" class="inp flex-1" value="09:00"/><span class="text-xs" style="color:var(--muted)">to</span><input type="time" class="inp flex-1" value="23:00"/><div class="tog on" onclick="this.classList.toggle('on')"></div></div>
+            <div class="flex items-center gap-3"><div class="text-sm font-semibold w-20 flex-shrink-0" style="color:var(--text)">Saturday</div><input type="time" class="inp flex-1" value="10:00"/><span class="text-xs" style="color:var(--muted)">to</span><input type="time" class="inp flex-1" value="24:00"/><div class="tog on" onclick="this.classList.toggle('on')"></div></div>
+            <div class="flex items-center gap-3"><div class="text-sm font-semibold w-20 flex-shrink-0" style="color:var(--text)">Sunday</div><input type="time" class="inp flex-1" value="11:00"/><span class="text-xs" style="color:var(--muted)">to</span><input type="time" class="inp flex-1" value="22:00"/><div class="tog" onclick="this.classList.toggle('on')"></div></div>
+          </div>
+        </div>
+        <div style="border-top:1px solid var(--border)"></div>
+        <div>
+          <div class="text-[10px] font-black uppercase tracking-widest mb-4" style="color:var(--orange)">Notification Preferences</div>
+          <div class="space-y-3.5">
+            <div class="flex items-center justify-between"><div><div class="text-sm font-semibold" style="color:var(--text)">New Order Sound Alert</div><div class="text-xs" style="color:var(--muted)">Play audio when a new order arrives</div></div><div class="tog on" onclick="this.classList.toggle('on')"></div></div>
+            <div class="flex items-center justify-between"><div><div class="text-sm font-semibold" style="color:var(--text)">Daily Email Summary</div><div class="text-xs" style="color:var(--muted)">Receive digest every evening</div></div><div class="tog on" onclick="this.classList.toggle('on')"></div></div>
+            <div class="flex items-center justify-between"><div><div class="text-sm font-semibold" style="color:var(--text)">SMS Critical Alerts</div><div class="text-xs" style="color:var(--muted)">Important order updates via SMS</div></div><div class="tog" onclick="this.classList.toggle('on')"></div></div>
+          </div>
+        </div>
+        <div style="border-top:1px solid var(--border)"></div>
+        <div>
+          <div class="text-[10px] font-black uppercase tracking-widest mb-4" style="color:var(--orange)">Order Settings</div>
+          <div class="space-y-3.5">
+            <div class="flex items-center justify-between"><div><div class="text-sm font-semibold" style="color:var(--text)">Auto-Accept Orders</div><div class="text-xs" style="color:var(--muted)">Skip manual acceptance step</div></div><div class="tog" onclick="this.classList.toggle('on')"></div></div>
+            <div class="flex items-center justify-between"><div><div class="text-sm font-semibold" style="color:var(--text)">Accept Dine-in</div></div><div class="tog on" onclick="this.classList.toggle('on')"></div></div>
+            <div class="flex items-center justify-between"><div><div class="text-sm font-semibold" style="color:var(--text)">Accept Delivery</div></div><div class="tog on" onclick="this.classList.toggle('on')"></div></div>
+            <div class="flex items-center justify-between"><div><div class="text-sm font-semibold" style="color:var(--text)">Accept Pickup</div></div><div class="tog on" onclick="this.classList.toggle('on')"></div></div>
+          </div>
+        </div>
+      </div>
+      <div id="pTab4" class="ppane px-6 py-5 space-y-4">
+        <div class="flex items-start gap-3 p-4 rounded-2xl text-sm" style="background:var(--blue2);border:1px solid rgba(59,130,246,.2);color:#60a5fa"><i data-lucide="info" style="width:15px;height:15px;flex-shrink:0;margin-top:1px"></i>Use a strong password. Enable 2FA for extra account security.</div>
+        <div><label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" style="color:var(--muted)">Current Password</label><input type="password" class="inp" placeholder="••••••••"/></div>
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" style="color:var(--muted)">New Password</label><input type="password" class="inp" placeholder="••••••••"/></div>
+          <div><label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" style="color:var(--muted)">Confirm Password</label><input type="password" class="inp" placeholder="••••••••"/></div>
+        </div>
+        <div style="border-top:1px solid var(--border)"></div>
+        <div class="flex items-center justify-between py-1"><div><div class="text-sm font-semibold" style="color:var(--text)">Two-Factor Authentication</div><div class="text-xs" style="color:var(--muted)">Additional security via SMS or authenticator app</div></div><div class="tog" onclick="this.classList.toggle('on')"></div></div>
+        <div style="border-top:1px solid var(--border)"></div>
+        <div class="text-[10px] font-black uppercase tracking-widest mb-3" style="color:var(--orange)">Active Sessions</div>
+        <div class="space-y-2">
+          <div class="flex items-center gap-3 p-3 rounded-2xl" style="background:var(--green2);border:1px solid rgba(16,185,129,.2)"><i data-lucide="monitor" style="width:15px;height:15px;color:#34d399;flex-shrink:0"></i><div class="flex-1"><div class="text-sm font-semibold" style="color:var(--text)">Chrome · Windows</div><div class="text-xs" style="color:var(--muted)">New Delhi · Current session</div></div><span class="text-xs font-black text-emerald-400">Active</span></div>
+          <div class="flex items-center gap-3 p-3 rounded-2xl" style="background:var(--border2);border:1px solid var(--border)"><i data-lucide="smartphone" style="width:15px;height:15px;color:var(--muted);flex-shrink:0"></i><div class="flex-1"><div class="text-sm font-semibold" style="color:var(--text)">Safari · iPhone 15</div><div class="text-xs" style="color:var(--muted)">New Delhi · 2 hours ago</div></div><button onclick="toast('Session revoked','warning')" class="text-xs font-black text-red-400 hover:underline">Revoke</button></div>
+        </div>
+      </div>
+    </div>
+    <div class="px-6 py-4 flex justify-between items-center rounded-b-[28px]" style="border-top:1px solid var(--border);background:var(--bg2)">
+      <button onclick="closeModal('profileModal')" class="btn btn-g">Cancel</button>
+      <button onclick="saveProfile()" class="btn btn-p"><i data-lucide="save" style="width:14px;height:14px"></i>Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- Rider Modal -->
+<div id="riderModal" class="modal-bg">
+  <div class="modal" style="max-width:380px">
+    <div class="px-6 py-4 flex items-center justify-between" style="border-bottom:1px solid var(--border)">
+      <div class="font-black text-base serif" style="color:var(--text)">Assign Delivery Rider</div>
+      <button onclick="closeModal('riderModal')" class="w-8 h-8 rounded-xl flex items-center justify-center" style="background:var(--border2);color:var(--muted)" onmouseenter="this.style.background='var(--orange)';this.style.color='#fff'" onmouseleave="this.style.background='var(--border2)';this.style.color='var(--muted)'"><i data-lucide="x" style="width:14px;height:14px"></i></button>
+    </div>
+    <div class="px-6 py-5 space-y-3">
+      <div class="text-xs mb-1" style="color:var(--muted)">Select an available rider for <strong style="color:var(--text)">#ORD-2841</strong></div>
+      <div class="rider-opt flex items-center gap-3 p-3.5 rounded-2xl cursor-pointer transition-all" style="border:1px solid var(--border)" onclick="pickRider(this,'Ravi Singh')">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center font-black text-sm flex-shrink-0" style="background:var(--blue2);color:#60a5fa">RS</div>
+        <div class="flex-1"><div class="text-sm font-bold" style="color:var(--text)">Ravi Singh</div><div class="text-xs" style="color:var(--muted)">4.8 ⭐ · 2 active deliveries</div></div>
+        <span class="text-[10px] font-black px-2.5 py-1 rounded-full" style="background:var(--green2);color:#34d399">Available</span>
+      </div>
+      <div class="rider-opt flex items-center gap-3 p-3.5 rounded-2xl cursor-pointer transition-all" style="border:1px solid var(--border)" onclick="pickRider(this,'Mohan Lal')">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center font-black text-sm flex-shrink-0" style="background:var(--purple2);color:#a78bfa">ML</div>
+        <div class="flex-1"><div class="text-sm font-bold" style="color:var(--text)">Mohan Lal</div><div class="text-xs" style="color:var(--muted)">4.6 ⭐ · 1 active delivery</div></div>
+        <span class="text-[10px] font-black px-2.5 py-1 rounded-full" style="background:var(--green2);color:#34d399">Available</span>
+      </div>
+      <div class="opacity-40 flex items-center gap-3 p-3.5 rounded-2xl cursor-not-allowed" style="border:1px solid var(--border)">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center font-black text-sm flex-shrink-0" style="background:var(--border2);color:var(--muted)">AK</div>
+        <div class="flex-1"><div class="text-sm font-bold" style="color:var(--text)">Arjun Kumar</div><div class="text-xs" style="color:var(--muted)">4.9 ⭐ · 3 active deliveries</div></div>
+        <span class="text-[10px] font-black px-2.5 py-1 rounded-full" style="background:var(--amber2);color:#fcd34d">Busy</span>
+      </div>
+    </div>
+    <div class="px-6 py-4 flex justify-end gap-2" style="border-top:1px solid var(--border);background:var(--bg2)">
+      <button onclick="closeModal('riderModal')" class="btn btn-g">Cancel</button>
+      <button id="assignBtn" onclick="confirmRider()" disabled class="btn btn-p opacity-40 cursor-not-allowed flex items-center gap-1"><i data-lucide="bike" style="width:13px;height:13px"></i>Assign Rider</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirm -->
+<div id="delModal" class="modal-bg">
+  <div class="modal" style="max-width:360px">
+    <div class="p-8 text-center">
+      <div class="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5" style="background:var(--red2)"><i data-lucide="trash-2" style="width:28px;height:28px;color:#f87171"></i></div>
+      <div class="font-black text-xl serif mb-2" style="color:var(--text)">Delete <span id="delName">this</span>?</div>
+      <div class="text-sm mb-7 leading-relaxed" style="color:var(--muted)">This action is permanent and cannot be reversed.</div>
+      <div class="flex gap-3"><button onclick="closeModal('delModal')" class="btn btn-g flex-1 justify-center py-3">Cancel</button><button id="delBtn" class="btn btn-d flex-1 justify-center py-3"><i data-lucide="trash-2" style="width:13px;height:13px"></i>Delete</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═════════════════════════ APP SHELL ═════════════════════════ -->
+<div style="display:flex;min-height:100vh">
+
+<!-- ── SIDEBAR ── -->
+<nav id="sidebar">
+  <div class="flex items-center gap-3 px-5 py-[18px] flex-shrink-0" style="border-bottom:1px solid var(--border)">
+    <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white text-xl flex-shrink-0 shadow-lg shadow-orange-600/20" style="background:var(--orange)"><i data-lucide="flame" style="width:18px;height:18px"></i></div>
+    <div class="sb-logo-text overflow-hidden">
+      <div class="font-black text-[17px] leading-tight sb-label" style="color:var(--text)">BinarCliff</div>
+      <div class="text-[9.5px] font-bold uppercase tracking-[.12em] sb-label" style="color:var(--muted2)">Restaurant OS</div>
+    </div>
+    <button id="collapseBtn" onclick="toggleSidebar()" class="ml-auto w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all" style="background:var(--border2);color:var(--muted)" title="Collapse sidebar"><i data-lucide="chevron-left" style="width:13px;height:13px" id="chevI"></i></button>
+  </div>
+  <div class="flex-1 overflow-y-auto py-2 noscroll">
+    <!-- Main -->
+    <div class="sb-row on" data-tip="Dashboard" onclick="navTo('dashboard',this)"><div class="sb-icon"><i data-lucide="layout-dashboard" style="width:16px;height:16px"></i></div><span class="sb-label">Dashboard</span></div>
+    <div class="sb-row" data-tip="Orders" onclick="navTo('orders',this)"><div class="sb-icon"><i data-lucide="shopping-bag" style="width:16px;height:16px"></i></div><span class="sb-label flex-1">Orders</span><span class="sb-badge sb-label text-[9.5px] font-black text-white px-2 py-0.5 rounded-full" style="background:var(--orange)">7</span></div>
+    <!-- Menu Section -->
+    <div class="sec-label sb-sec">Menu</div>
+    <div class="sb-row" data-tip="Menu" onclick="toggleSub('menuSub',this)"><div class="sb-icon"><i data-lucide="utensils" style="width:16px;height:16px"></i></div><span class="sb-label flex-1">Menu Management</span><i data-lucide="chevron-down" style="width:13px;height:13px" class="sb-label sub-arrow"></i></div>
+    <div id="menuSub" class="sb-sub open">
+      <div class="sb-sub-item sb-label" onclick="navTo('categories',null)"><i data-lucide="folder" style="width:12px;height:12px;flex-shrink:0"></i>Categories</div>
+      <div class="sb-sub-item sb-label" onclick="navTo('menuItems',null)"><i data-lucide="pizza" style="width:12px;height:12px;flex-shrink:0"></i>Menu Items</div>
+      <div class="sb-sub-item sb-label"><i data-lucide="settings-2" style="width:12px;height:12px;flex-shrink:0"></i>Add-ons & Variants</div>
+    </div>
+    <!-- Promos Section -->
+    <div class="sec-label sb-sec">Promotions</div>
+    <div class="sb-row" data-tip="Promos" onclick="toggleSub('promoSub',this)"><div class="sb-icon"><i data-lucide="gift" style="width:16px;height:16px"></i></div><span class="sb-label flex-1">Promotions</span><i data-lucide="chevron-down" style="width:13px;height:13px" class="sb-label sub-arrow"></i></div>
+    <div id="promoSub" class="sb-sub">
+      <div class="sb-sub-item sb-label" onclick="navTo('discounts',null)"><i data-lucide="tag" style="width:12px;height:12px;flex-shrink:0"></i>Item Discounts</div>
+      <div class="sb-sub-item sb-label" onclick="navTo('coupons',null)"><i data-lucide="ticket" style="width:12px;height:12px;flex-shrink:0"></i>Coupons</div>
+      <div class="sb-sub-item sb-label" onclick="navTo('offers',null)"><i data-lucide="sparkles" style="width:12px;height:12px;flex-shrink:0"></i>Offers</div>
+    </div>
+    <div class="sb-row" data-tip="Analytics" onclick="navTo('analytics',this)"><div class="sb-icon"><i data-lucide="bar-chart-3" style="width:16px;height:16px"></i></div><span class="sb-label">Promo Analytics</span></div>
+    <!-- Account Section -->
+    <div class="sec-label sb-sec">Account</div>
+    <div class="sb-row" data-tip="Profile" onclick="openModal('profileModal')"><div class="sb-icon"><i data-lucide="settings" style="width:16px;height:16px"></i></div><span class="sb-label">Settings & Profile</span></div>
+    <div class="sb-row" data-tip="Logout" style="color:rgba(234,88,12,.6)" onmouseenter="this.style.color='var(--orange)';this.style.background='var(--orange3)'" onmouseleave="this.style.color='rgba(234,88,12,.6)';this.style.background=''" onclick="if(confirm('Logout of BinarCliff?'))toast('Logged out successfully','info')">
+      <div class="sb-icon" style="background:var(--orange3)"><i data-lucide="log-out" style="width:16px;height:16px"></i></div>
+      <span class="sb-label">Logout</span>
+    </div>
+  </div>
+  <div class="flex-shrink-0 px-4 py-3 flex items-center gap-3" style="border-top:1px solid var(--border)">
+    <div class="w-8 h-8 rounded-xl flex items-center justify-center text-white text-xs font-black flex-shrink-0" style="background:linear-gradient(135deg,var(--orange),#f97316)">RS</div>
+    <div class="sb-user-text overflow-hidden">
+      <div class="text-[12.5px] font-black truncate" id="sbName" style="color:var(--text)">Raj's Kitchen</div>
+      <div class="text-[10px] truncate" style="color:var(--muted2)">Owner · New Delhi</div>
+    </div>
+  </div>
+</nav>
+
+<!-- ── MAIN ── -->
+<div id="main" class="flex-1 flex flex-col">
+
+<!-- ── TOPBAR ── -->
+<header class="h-[60px] flex items-center gap-3 px-5 sticky top-0 z-[150] flex-shrink-0" style="background:var(--bg2);border-bottom:1px solid var(--border)">
+  <button id="hamBtn" onclick="openMobSidebar()" style="display:none;width:36px;height:36px;border-radius:12px;background:var(--border2);border:none;cursor:pointer;align-items:center;justify-content:center;color:var(--muted)" onmouseenter="this.style.color='var(--orange)'" onmouseleave="this.style.color='var(--muted)'"><i data-lucide="menu" style="width:17px;height:17px"></i></button>
+  <div class="font-black text-base leading-none flex items-center gap-1.5 flex-shrink-0" style="color:var(--text)">
+    <span id="topbarName">Raj's Kitchen</span>
+    <span class="text-xs font-medium hidden sm:inline" style="color:var(--muted)">· Delhi</span>
+  </div>
+  <div id="topSearchWrap" class="flex-1 max-w-72 relative mx-2">
+    <i data-lucide="search" style="width:15px;height:15px;color:var(--muted2);position:absolute;left:12px;top:50%;transform:translateY(-50%)"></i>
+    <input type="text" placeholder="Search orders, items, customers…" class="inp pl-9 h-9 text-xs" style="border-radius:20px" onkeyup="gSearch(this.value)"/>
+  </div>
+  <div class="flex items-center gap-2 ml-auto">
+    <!-- Online Status -->
+    <div id="onToggle" class="flex items-center gap-1.5 cursor-pointer text-xs font-black uppercase tracking-wide transition-all px-3 py-1.5 rounded-full" style="background:var(--green2);border:1px solid rgba(16,185,129,.2);color:#34d399" onclick="toggleOnline(this)">
+      <div class="w-2 h-2 rounded-full ping" id="onDot" style="background:#10b981"></div>
+      <span id="onTxt">Online</span>
+    </div>
+    <!-- Bell -->
+    <button onclick="showAlert()" class="relative w-9 h-9 rounded-xl flex items-center justify-center transition-all" style="background:var(--border2);color:var(--muted)" onmouseenter="this.style.color='var(--orange)';this.style.background='var(--orange3)'" onmouseleave="this.style.color='var(--muted)';this.style.background='var(--border2)'">
+      <i data-lucide="bell" style="width:16px;height:16px"></i>
+      <div class="notif-dot"></div>
+    </button>
+    <!-- Theme -->
+    <button onclick="toggleTheme()" class="w-9 h-9 rounded-xl flex items-center justify-center transition-all" style="background:var(--border2);color:var(--muted)" onmouseenter="this.style.color='var(--orange)';this.style.background='var(--orange3)'" onmouseleave="this.style.color='var(--muted)';this.style.background='var(--border2)'">
+      <i data-lucide="sun" id="themeIcon" style="width:16px;height:16px"></i>
+    </button>
+    <!-- Avatar -->
+    <button onclick="openModal('profileModal')" class="w-9 h-9 rounded-xl text-white text-sm font-black flex items-center justify-center border-2 transition-all shadow-md shadow-orange-600/20" style="background:linear-gradient(135deg,var(--orange),#f97316);border-color:var(--bg2)" title="Edit Profile">RS</button>
+  </div>
+</header>
+
+<!-- ── CONTENT ── -->
+<div class="flex-1 p-5 lg:p-6" id="contentArea">
+
+<!-- ████████ DASHBOARD ████████ -->
+<div class="page on" id="page-dashboard">
+  <!-- Header -->
+  <div class="flex items-start justify-between mb-6 flex-wrap gap-3">
+    <div>
+      <h1 class="font-black text-3xl tracking-tight leading-none" style="color:var(--text)">Good afternoon, <span class="serif text-orange-500">Raj.</span></h1>
+      <p class="text-sm mt-1.5" style="color:var(--muted)">Here's what's happening at your restaurant today</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <button class="btn btn-g flex items-center gap-1.5 text-xs"><i data-lucide="calendar" style="width:13px;height:13px"></i>Mar 16, 2026</button>
+      <button onclick="showAlert()" class="btn btn-p flex items-center gap-1.5 text-xs"><i data-lucide="zap" style="width:13px;height:13px"></i>Simulate Order</button>
+    </div>
+  </div>
+
+  <!-- KPI Row -->
+  <div class="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-4">
+    <div class="card card-interactive p-5 relative overflow-hidden sg sg-o">
+      <div class="w-10 h-10 rounded-2xl flex items-center justify-center mb-3 flex-shrink-0" style="background:var(--orange2)"><i data-lucide="shopping-bag" style="width:20px;height:20px;color:var(--orange)"></i></div>
+      <div class="text-[10px] font-black uppercase tracking-widest mb-1" style="color:var(--muted2)">Today's Orders</div>
+      <div class="font-black text-4xl leading-none mb-2 serif" style="color:var(--text)">47</div>
+      <div class="text-xs flex items-center gap-1" style="color:#34d399"><i data-lucide="trending-up" style="width:11px;height:11px"></i>+12% from yesterday</div>
+    </div>
+    <div class="card card-interactive p-5 relative overflow-hidden sg sg-g">
+      <div class="w-10 h-10 rounded-2xl flex items-center justify-center mb-3" style="background:var(--green2)"><i data-lucide="indian-rupee" style="width:20px;height:20px;color:var(--green)"></i></div>
+      <div class="text-[10px] font-black uppercase tracking-widest mb-1" style="color:var(--muted2)">Revenue Today</div>
+      <div class="font-black text-4xl leading-none mb-2 serif" style="color:var(--text)">₹18.4K</div>
+      <div class="text-xs flex items-center gap-1" style="color:#34d399"><i data-lucide="trending-up" style="width:11px;height:11px"></i>+8.3% vs yesterday</div>
+    </div>
+    <div class="card card-interactive p-5 relative overflow-hidden sg sg-b">
+      <div class="w-10 h-10 rounded-2xl flex items-center justify-center mb-3" style="background:var(--blue2)"><i data-lucide="timer" style="width:20px;height:20px;color:var(--blue)"></i></div>
+      <div class="text-[10px] font-black uppercase tracking-widest mb-1" style="color:var(--muted2)">Avg Prep Time</div>
+      <div class="font-black text-4xl leading-none mb-2 serif" style="color:var(--text)">18m</div>
+      <div class="text-xs flex items-center gap-1" style="color:#fcd34d"><i data-lucide="trending-up" style="width:11px;height:11px"></i>+2m slower today</div>
+    </div>
+    <div class="card card-interactive p-5 relative overflow-hidden sg sg-p">
+      <div class="w-10 h-10 rounded-2xl flex items-center justify-center mb-3" style="background:var(--purple2)"><i data-lucide="star" style="width:20px;height:20px;color:var(--purple)"></i></div>
+      <div class="text-[10px] font-black uppercase tracking-widest mb-1" style="color:var(--muted2)">Rating</div>
+      <div class="font-black text-4xl leading-none mb-2 serif" style="color:var(--text)">4.7</div>
+      <div class="text-xs flex items-center gap-1" style="color:#34d399"><i data-lucide="trending-up" style="width:11px;height:11px"></i>+0.1 this week</div>
+    </div>
+  </div>
+
+  <!-- Revenue Chart + Live Orders -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+    <div class="lg:col-span-2 card overflow-hidden">
+      <div class="flex items-center justify-between px-6 py-4" style="border-bottom:1px solid var(--border)">
+        <div class="font-black text-base tracking-tight serif" style="color:var(--text)">Revenue Overview</div>
+        <select class="text-[10px] font-black uppercase tracking-wide outline-none cursor-pointer px-3 py-1.5 rounded-xl" style="background:var(--border2);border:1px solid var(--border);color:var(--muted)"><option>Last 7 days</option><option>Last 30 days</option><option>This Month</option></select>
+      </div>
+      <div class="px-6 py-5">
+        <div class="flex items-end gap-2 mb-6" style="height:128px">
+          <div class="flex-1 flex flex-col items-center gap-1.5"><div class="cbar w-full" style="height:60%;background:linear-gradient(to top,var(--orange),#fb923c);min-height:4px" title="Mon ₹14K"></div><span class="text-[9px] font-semibold" style="color:var(--muted2)">Mon</span></div>
+          <div class="flex-1 flex flex-col items-center gap-1.5"><div class="cbar w-full" style="height:82%;background:linear-gradient(to top,var(--orange),#fb923c)" title="Tue ₹18K"></div><span class="text-[9px] font-semibold" style="color:var(--muted2)">Tue</span></div>
+          <div class="flex-1 flex flex-col items-center gap-1.5"><div class="cbar w-full" style="height:55%;background:linear-gradient(to top,var(--orange),#fb923c)" title="Wed ₹12K"></div><span class="text-[9px] font-semibold" style="color:var(--muted2)">Wed</span></div>
+          <div class="flex-1 flex flex-col items-center gap-1.5"><div class="cbar w-full" style="height:95%;background:linear-gradient(to top,var(--orange),#fb923c)" title="Thu ₹22K"></div><span class="text-[9px] font-semibold" style="color:var(--muted2)">Thu</span></div>
+          <div class="flex-1 flex flex-col items-center gap-1.5"><div class="cbar w-full" style="height:72%;background:linear-gradient(to top,var(--orange),#fb923c)" title="Fri ₹16K"></div><span class="text-[9px] font-semibold" style="color:var(--muted2)">Fri</span></div>
+          <div class="flex-1 flex flex-col items-center gap-1.5"><div class="cbar w-full" style="height:100%;background:linear-gradient(to top,var(--orange),#fb923c)" title="Sat ₹24K"></div><span class="text-[9px] font-semibold" style="color:var(--muted2)">Sat</span></div>
+          <div class="flex-1 flex flex-col items-center gap-1.5"><div class="cbar w-full" style="height:78%;border:1.5px dashed var(--orange);border-radius:6px 6px 0 0;background:var(--orange3)" title="Today ₹18.4K"></div><span class="text-[9px] font-black" style="color:var(--orange)">Now</span></div>
+        </div>
+        <div class="grid grid-cols-3 gap-3 pt-4" style="border-top:1px solid var(--border)">
+          <div class="text-center"><div class="text-[10px] mb-1" style="color:var(--muted2)">This Week</div><div class="font-black text-lg serif" style="color:var(--text)">₹1.1L</div></div>
+          <div class="text-center" style="border-left:1px solid var(--border);border-right:1px solid var(--border)"><div class="text-[10px] mb-1" style="color:var(--muted2)">Avg Order</div><div class="font-black text-lg serif" style="color:var(--text)">₹391</div></div>
+          <div class="text-center"><div class="text-[10px] mb-1" style="color:var(--muted2)">Cancelled</div><div class="font-black text-lg serif" style="color:var(--orange)">3</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="card flex flex-col overflow-hidden">
+      <div class="flex items-center justify-between px-5 py-4 flex-shrink-0" style="border-bottom:1px solid var(--border)">
+        <div class="font-black text-sm tracking-tight serif" style="color:var(--text)">Live Orders</div>
+        <span class="badge bpr">7 Active</span>
+      </div>
+      <div class="flex-1 divide-y" style="--tw-divide-opacity:1">
+        <div class="flex items-center gap-3 px-5 py-3.5 cursor-pointer transition-colors hover:bg-white/[.02]" onclick="openDrawer()">
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0" style="background:var(--orange2)">🛵</div>
+          <div class="flex-1 min-w-0"><div class="text-sm font-bold truncate" style="color:var(--text)">#2847 · Aryan M.</div><div class="text-xs" style="color:var(--muted)">3 items · Delivery</div></div>
+          <div class="text-right"><div class="text-sm font-black" style="color:var(--orange)">₹485</div><div class="text-[10px] font-black mt-0.5 px-1.5 py-0.5 rounded-lg" style="background:var(--red2);color:#f87171">12:34</div></div>
+        </div>
+        <div class="flex items-center gap-3 px-5 py-3.5 cursor-pointer transition-colors hover:bg-white/[.02]" onclick="openDrawer()">
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0" style="background:var(--green2)">🍽️</div>
+          <div class="flex-1 min-w-0"><div class="text-sm font-bold truncate" style="color:var(--text)">#2846 · Sneha P.</div><div class="text-xs" style="color:var(--muted)">2 items · Dine-in</div></div>
+          <div class="text-right"><div class="text-sm font-black" style="color:var(--text)">₹620</div><div class="text-[10px] font-black mt-0.5 px-1.5 py-0.5 rounded-lg" style="background:var(--amber2);color:#fcd34d">07:15</div></div>
+        </div>
+        <div class="flex items-center gap-3 px-5 py-3.5 cursor-pointer transition-colors hover:bg-white/[.02]" onclick="openDrawer()">
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0" style="background:var(--blue2)">🛍️</div>
+          <div class="flex-1 min-w-0"><div class="text-sm font-bold truncate" style="color:var(--text)">#2845 · Rohan G.</div><div class="text-xs" style="color:var(--muted)">1 item · Pickup</div></div>
+          <div class="text-right"><div class="text-sm font-black" style="color:var(--text)">₹180</div><div class="text-[10px] font-black mt-0.5 px-1.5 py-0.5 rounded-lg" style="background:var(--green2);color:#34d399">03:22</div></div>
+        </div>
+        <div class="flex items-center gap-3 px-5 py-3.5 cursor-pointer transition-colors hover:bg-white/[.02]" onclick="openDrawer()">
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0" style="background:var(--orange2)">🛵</div>
+          <div class="flex-1 min-w-0"><div class="text-sm font-bold truncate" style="color:var(--text)">#2844 · Meera S.</div><div class="text-xs" style="color:var(--muted)">4 items · Delivery</div></div>
+          <div class="text-right"><div class="text-sm font-black" style="color:var(--text)">₹875</div><div class="text-[10px] font-black mt-0.5 px-1.5 py-0.5 rounded-lg" style="background:var(--green2);color:#34d399">02:10</div></div>
+        </div>
+      </div>
+      <div class="px-5 py-3 flex-shrink-0" style="border-top:1px solid var(--border)"><button onclick="navTo('orders',null)" class="w-full text-center text-[10px] font-black uppercase tracking-widest transition-colors" style="color:var(--orange)" onmouseenter="this.style.opacity='.7'" onmouseleave="this.style.opacity='1'">View All Orders →</button></div>
+    </div>
+  </div>
+
+  <!-- Bottom 3 Widgets -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+    <!-- ── Top Items Today ── -->
+    <div class="card overflow-hidden">
+      <div class="flex items-center justify-between px-5 py-4" style="border-bottom:1px solid var(--border)">
+        <div class="font-black text-sm tracking-tight serif" style="color:var(--text)">Top Items Today</div>
+        <button onclick="navTo('menuItems',null)" class="text-[10px] font-black uppercase transition-colors" style="color:var(--orange)" onmouseenter="this.style.opacity='.7'" onmouseleave="this.style.opacity='1'">View All →</button>
+      </div>
+      <div>
+        <div class="flex items-center gap-3 px-5 py-3 group cursor-pointer transition-colors hover:bg-white/[.018]" style="border-bottom:1px solid var(--border)">
+          <div class="text-[11px] font-black w-4 flex-shrink-0" style="color:var(--orange)">01</div>
+          <div class="w-8 h-8 rounded-xl flex items-center justify-center text-base flex-shrink-0" style="background:var(--orange2)">🍕</div>
+          <div class="flex-1 min-w-0"><div class="text-sm font-bold truncate" style="color:var(--text)">Margherita Pizza</div><div class="text-xs" style="color:var(--muted)">34 orders · ₹9,520</div></div>
+          <div class="w-1 h-8 rounded-full flex-shrink-0" style="background:var(--orange)"></div>
+        </div>
+        <div class="flex items-center gap-3 px-5 py-3 cursor-pointer transition-colors hover:bg-white/[.018]" style="border-bottom:1px solid var(--border)">
+          <div class="text-[11px] font-black w-4 flex-shrink-0" style="color:var(--muted2)">02</div>
+          <div class="w-8 h-8 rounded-xl flex items-center justify-center text-base flex-shrink-0" style="background:rgba(249,115,22,.1)">🍗</div>
+          <div class="flex-1 min-w-0"><div class="text-sm font-bold truncate" style="color:var(--text)">Butter Chicken</div><div class="text-xs" style="color:var(--muted)">28 orders · ₹9,800</div></div>
+          <div class="w-1 h-7 rounded-full flex-shrink-0" style="background:var(--border)"></div>
+        </div>
+        <div class="flex items-center gap-3 px-5 py-3 cursor-pointer transition-colors hover:bg-white/[.018]" style="border-bottom:1px solid var(--border)">
+          <div class="text-[11px] font-black w-4 flex-shrink-0" style="color:var(--muted2)">03</div>
+          <div class="w-8 h-8 rounded-xl flex items-center justify-center text-base flex-shrink-0" style="background:var(--green2)">🥤</div>
+          <div class="flex-1 min-w-0"><div class="text-sm font-bold truncate" style="color:var(--text)">Mango Lassi</div><div class="text-xs" style="color:var(--muted)">21 orders · ₹1,260</div></div>
+          <div class="w-1 h-6 rounded-full flex-shrink-0" style="background:var(--border)"></div>
+        </div>
+        <div class="flex items-center gap-3 px-5 py-3 cursor-pointer transition-colors hover:bg-white/[.018]" style="border-bottom:1px solid var(--border)">
+          <div class="text-[11px] font-black w-4 flex-shrink-0" style="color:var(--muted2)">04</div>
+          <div class="w-8 h-8 rounded-xl flex items-center justify-center text-base flex-shrink-0" style="background:var(--purple2)">🥗</div>
+          <div class="flex-1 min-w-0"><div class="text-sm font-bold truncate" style="color:var(--text)">Paneer Tikka</div><div class="text-xs" style="color:var(--muted)">18 orders · ₹3,960</div></div>
+          <div class="w-1 h-5 rounded-full flex-shrink-0" style="background:var(--border)"></div>
+        </div>
+        <div class="flex items-center gap-3 px-5 py-3 cursor-pointer transition-colors hover:bg-white/[.018]">
+          <div class="text-[11px] font-black w-4 flex-shrink-0" style="color:var(--muted2)">05</div>
+          <div class="w-8 h-8 rounded-xl flex items-center justify-center text-base flex-shrink-0" style="background:var(--amber2)">🍰</div>
+          <div class="flex-1 min-w-0"><div class="text-sm font-bold truncate" style="color:var(--text)">Gulab Jamun</div><div class="text-xs" style="color:var(--muted)">14 orders · ₹1,120</div></div>
+          <div class="w-1 h-4 rounded-full flex-shrink-0" style="background:var(--border)"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Order Status ── -->
+    <div class="card overflow-hidden">
+      <div class="flex items-center justify-between px-5 py-4" style="border-bottom:1px solid var(--border)">
+        <div class="font-black text-sm tracking-tight serif" style="color:var(--text)">Order Status</div>
+        <button onclick="navTo('orders',null)" class="text-[10px] font-black uppercase transition-colors" style="color:var(--orange)" onmouseenter="this.style.opacity='.7'" onmouseleave="this.style.opacity='1'">Manage →</button>
+      </div>
+      <div class="px-5 py-4 space-y-3.5">
+        <div>
+          <div class="flex justify-between text-xs mb-1.5"><span class="font-bold flex items-center gap-2"><span class="w-2 h-2 rounded-full inline-block" style="background:#f97316"></span><span style="color:var(--text)">Pending</span></span><span class="font-black text-xs" style="color:var(--text)">3</span></div>
+          <div class="progress-track"><div class="h-full rounded-full transition-all" style="width:15%;background:#f97316"></div></div>
+        </div>
+        <div>
+          <div class="flex justify-between text-xs mb-1.5"><span class="font-bold flex items-center gap-2"><span class="w-2 h-2 rounded-full inline-block" style="background:var(--amber)"></span><span style="color:var(--text)">Preparing</span></span><span class="font-black text-xs" style="color:var(--text)">7</span></div>
+          <div class="progress-track"><div class="h-full rounded-full" style="width:35%;background:var(--amber)"></div></div>
+        </div>
+        <div>
+          <div class="flex justify-between text-xs mb-1.5"><span class="font-bold flex items-center gap-2"><span class="w-2 h-2 rounded-full inline-block" style="background:var(--green)"></span><span style="color:var(--text)">Ready</span></span><span class="font-black text-xs" style="color:var(--text)">4</span></div>
+          <div class="progress-track"><div class="h-full rounded-full" style="width:20%;background:var(--green)"></div></div>
+        </div>
+        <div>
+          <div class="flex justify-between text-xs mb-1.5"><span class="font-bold flex items-center gap-2"><span class="w-2 h-2 rounded-full inline-block" style="background:var(--blue)"></span><span style="color:var(--text)">Out for Delivery</span></span><span class="font-black text-xs" style="color:var(--text)">3</span></div>
+          <div class="progress-track"><div class="h-full rounded-full" style="width:15%;background:var(--blue)"></div></div>
+        </div>
+        <div>
+          <div class="flex justify-between text-xs mb-1.5"><span class="font-bold flex items-center gap-2"><span class="w-2 h-2 rounded-full inline-block" style="background:var(--purple)"></span><span style="color:var(--text)">Delivered</span></span><span class="font-black text-xs" style="color:var(--text)">30</span></div>
+          <div class="progress-track"><div class="h-full rounded-full" style="width:65%;background:var(--purple)"></div></div>
+        </div>
+        <div>
+          <div class="flex justify-between text-xs mb-1.5"><span class="font-bold flex items-center gap-2"><span class="w-2 h-2 rounded-full inline-block" style="background:var(--red)"></span><span style="color:var(--text)">Cancelled</span></span><span class="font-black text-xs" style="color:var(--text)">3</span></div>
+          <div class="progress-track"><div class="h-full rounded-full" style="width:8%;background:var(--red)"></div></div>
+        </div>
+        <div class="flex items-center justify-around text-center pt-3" style="border-top:1px solid var(--border)">
+          <div><div class="font-black text-2xl serif" style="color:var(--text)">47</div><div class="text-[10px]" style="color:var(--muted2)">Total</div></div>
+          <div style="border-left:1px solid var(--border);padding-left:16px"><div class="font-black text-2xl serif" style="color:#34d399">30</div><div class="text-[10px]" style="color:var(--muted2)">Completed</div></div>
+          <div style="border-left:1px solid var(--border);padding-left:16px"><div class="font-black text-2xl serif" style="color:var(--orange)">3</div><div class="text-[10px]" style="color:var(--muted2)">Cancelled</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Active Promotions ── -->
+    <div class="card overflow-hidden">
+      <div class="flex items-center justify-between px-5 py-4" style="border-bottom:1px solid var(--border)">
+        <div class="font-black text-sm tracking-tight serif" style="color:var(--text)">Active Promotions</div>
+        <button onclick="navTo('coupons',null)" class="text-[10px] font-black uppercase transition-colors" style="color:var(--orange)" onmouseenter="this.style.opacity='.7'" onmouseleave="this.style.opacity='1'">Manage →</button>
+      </div>
+      <div>
+        <div class="px-5 py-3.5 cursor-pointer transition-colors hover:bg-white/[.018]" style="border-bottom:1px solid var(--border)" onclick="navTo('coupons',null)">
+          <div class="flex items-center justify-between mb-1.5">
+            <div class="flex items-center gap-2"><div class="w-7 h-7 rounded-xl flex items-center justify-center text-sm flex-shrink-0" style="background:var(--orange2)">🎟️</div><span class="font-black text-sm tracking-wider" style="color:var(--text)">FIRST20</span></div>
+            <span class="badge bact text-[9px]">● Live</span>
+          </div>
+          <div class="text-xs mb-2" style="color:var(--muted)">20% off · Min ₹200 · Max ₹100</div>
+          <div class="progress-track mb-1"><div class="h-full rounded-full" style="width:23%;background:var(--orange)"></div></div>
+          <div class="text-[10px]" style="color:var(--muted2)">23/100 uses · Expires Mar 31</div>
+        </div>
+        <div class="px-5 py-3.5 cursor-pointer transition-colors hover:bg-white/[.018]" style="border-bottom:1px solid var(--border)" onclick="navTo('coupons',null)">
+          <div class="flex items-center justify-between mb-1.5">
+            <div class="flex items-center gap-2"><div class="w-7 h-7 rounded-xl flex items-center justify-center text-sm flex-shrink-0" style="background:var(--amber2)">🎉</div><span class="font-black text-sm tracking-wider" style="color:var(--text)">SAVE50</span></div>
+            <span class="badge bact text-[9px]">● Live</span>
+          </div>
+          <div class="text-xs mb-2" style="color:var(--muted)">₹50 off · Min ₹400 · 1/user</div>
+          <div class="progress-track mb-1"><div class="h-full rounded-full" style="width:33%;background:var(--orange)"></div></div>
+          <div class="text-[10px]" style="color:var(--muted2)">67/200 uses · Expires Apr 15</div>
+        </div>
+        <div class="px-5 py-3.5 cursor-pointer transition-colors hover:bg-white/[.018]" style="border-bottom:1px solid var(--border)" onclick="navTo('offers',null)">
+          <div class="flex items-center justify-between mb-1">
+            <div class="flex items-center gap-2"><div class="w-7 h-7 rounded-xl flex items-center justify-center text-sm flex-shrink-0" style="background:var(--amber2)">⏰</div><span class="font-semibold text-sm" style="color:var(--text)">Happy Hour</span></div>
+            <span class="badge bact text-[9px]">● Live</span>
+          </div>
+          <div class="text-xs" style="color:var(--muted)">30% off beverages · 4–6 PM</div>
+        </div>
+        <div class="px-5 py-3.5 cursor-pointer transition-colors hover:bg-white/[.018]" onclick="navTo('offers',null)">
+          <div class="flex items-center justify-between mb-1">
+            <div class="flex items-center gap-2"><div class="w-7 h-7 rounded-xl flex items-center justify-center text-sm flex-shrink-0" style="background:var(--purple2)">🎁</div><span class="font-semibold text-sm" style="color:var(--text)">Family Pack</span></div>
+            <span class="badge bact text-[9px]">● Live</span>
+          </div>
+          <div class="text-xs" style="color:var(--muted)">2 mains + 4 drinks = ₹899</div>
+        </div>
+      </div>
+      <div class="px-5 py-3" style="border-top:1px solid var(--border)">
+        <button onclick="openModal('couponModal')" class="w-full flex items-center justify-center gap-1.5 text-[10px] font-black uppercase tracking-wide transition-all" style="color:var(--orange)" onmouseenter="this.style.opacity='.7'" onmouseleave="this.style.opacity='1'"><i data-lucide="plus" style="width:11px;height:11px"></i>Create New Promotion</button>
+      </div>
+    </div>
+
+  </div><!-- /3 bottom widgets -->
+</div><!-- /dashboard -->
+
+<!-- ████████ ORDERS ████████ -->
+<div class="page" id="page-orders">
+  <div class="flex items-start justify-between mb-5 flex-wrap gap-3">
+    <div><h1 class="font-black text-3xl tracking-tight leading-none serif" style="color:var(--text)">Orders.</h1><p class="text-sm mt-1.5" style="color:var(--muted)">47 orders today · 7 currently active</p></div>
+    <div class="flex gap-2">
+      <button onclick="exportOrders()" class="btn btn-g flex items-center gap-1.5 text-xs"><i data-lucide="download" style="width:13px;height:13px"></i>Export CSV</button>
+      <button class="btn btn-p flex items-center gap-1.5 text-xs"><i data-lucide="plus" style="width:13px;height:13px"></i>Manual Order</button>
+    </div>
+  </div>
+  <!-- Status Tabs -->
+  <div class="flex overflow-x-auto noscroll mb-4" style="border-bottom:1px solid var(--border)">
+    <div class="tab on" onclick="setTab(this,'all')">All <span style="opacity:.5">(47)</span></div>
+    <div class="tab" onclick="setTab(this,'Pending')">Pending <span style="opacity:.5">(3)</span></div>
+    <div class="tab" onclick="setTab(this,'Preparing')">Preparing <span style="opacity:.5">(7)</span></div>
+    <div class="tab" onclick="setTab(this,'Ready')">Ready <span style="opacity:.5">(4)</span></div>
+    <div class="tab" onclick="setTab(this,'Delivered')">Delivered <span style="opacity:.5">(30)</span></div>
+    <div class="tab" onclick="setTab(this,'Cancelled')">Cancelled <span style="opacity:.5">(3)</span></div>
+  </div>
+  <!-- Filters -->
+  <div class="flex items-center gap-2 mb-4 flex-wrap">
+    <div class="relative flex-1 min-w-44 max-w-72"><i data-lucide="search" style="width:14px;height:14px;color:var(--muted2);position:absolute;left:12px;top:50%;transform:translateY(-50%)"></i><input id="oSearch" type="text" placeholder="Order ID or customer…" class="inp pl-9 h-9 text-xs" style="border-radius:20px" onkeyup="renderOrders()"/></div>
+    <select id="oType" class="inp h-9 text-xs" style="width:auto;border-radius:20px;padding:0 30px 0 12px" onchange="renderOrders()"><option value="">All Types</option><option>Delivery</option><option>Dine-in</option><option>Pickup</option></select>
+    <select id="oPay" class="inp h-9 text-xs" style="width:auto;border-radius:20px;padding:0 30px 0 12px" onchange="renderOrders()"><option value="">All Payments</option><option>Online</option><option>Cash</option><option>Card</option></select>
+    <input id="oDate" type="date" class="inp h-9 text-xs" style="border-radius:20px;width:auto" onchange="renderOrders()"/>
+    <button onclick="clearOF()" class="btn btn-g btn-sm flex items-center gap-1 text-[10px]"><i data-lucide="x" style="width:11px;height:11px"></i>Clear</button>
+  </div>
+  <div class="card-flat overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead><tr><th>Order ID</th><th>Customer</th><th class="hidden md:table-cell">Type</th><th>Amount</th><th class="hidden lg:table-cell">Payment</th><th>Status</th><th class="hidden sm:table-cell">Timer</th><th>Actions</th></tr></thead>
+        <tbody id="oTbody"></tbody>
+      </table>
+    </div>
+    <div id="oEmpty" class="hidden py-16 text-center">
+      <i data-lucide="inbox" style="width:44px;height:44px;margin:0 auto 12px;display:block;color:var(--muted2)"></i>
+      <div class="font-black text-base serif mb-1" style="color:var(--muted)">No orders found</div>
+      <div class="text-sm" style="color:var(--muted2)">Try adjusting your search or filters</div>
+    </div>
+    <div class="flex items-center justify-between px-5 py-3" style="border-top:1px solid var(--border)">
+      <div class="text-xs" id="oCount" style="color:var(--muted)">Showing orders</div>
+      <div class="flex items-center gap-1">
+        <button class="w-7 h-7 rounded-xl flex items-center justify-center transition-all" style="background:var(--border2);color:var(--muted)" onmouseenter="this.style.color='var(--orange)'" onmouseleave="this.style.color='var(--muted)'"><i data-lucide="chevron-left" style="width:13px;height:13px"></i></button>
+        <button class="w-7 h-7 rounded-xl flex items-center justify-center text-white text-xs font-black" style="background:var(--orange)">1</button>
+        <button class="w-7 h-7 rounded-xl flex items-center justify-center text-xs transition-all" style="background:var(--border2);color:var(--muted)" onmouseenter="this.style.color='var(--orange)'" onmouseleave="this.style.color='var(--muted)'">2</button>
+        <button class="w-7 h-7 rounded-xl flex items-center justify-center text-xs transition-all" style="background:var(--border2);color:var(--muted)" onmouseenter="this.style.color='var(--orange)'" onmouseleave="this.style.color='var(--muted)'">3</button>
+        <button class="w-7 h-7 rounded-xl flex items-center justify-center transition-all" style="background:var(--border2);color:var(--muted)" onmouseenter="this.style.color='var(--orange)'" onmouseleave="this.style.color='var(--muted)'"><i data-lucide="chevron-right" style="width:13px;height:13px"></i></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ████████ CATEGORIES ████████ -->
+<div class="page" id="page-categories">
+  <div class="flex items-start justify-between mb-5 flex-wrap gap-3">
+    <div><h1 class="font-black text-3xl tracking-tight leading-none serif" style="color:var(--text)">Categories.</h1><p class="text-sm mt-1.5" style="color:var(--muted)">Drag the ⠿ handle to reorder display priority</p></div>
+    <button onclick="openAddCat()" class="btn btn-p flex items-center gap-1.5 text-xs"><i data-lucide="plus" style="width:13px;height:13px"></i>Add Category</button>
+  </div>
+  <div class="card-flat overflow-hidden">
+    <div class="flex items-center gap-2 px-5 py-3 text-xs" style="background:rgba(59,130,246,.06);border-bottom:1px solid var(--border);color:#60a5fa"><i data-lucide="info" style="width:13px;height:13px;flex-shrink:0"></i>Drag the grip icon to change display order. Changes apply to your customer-facing menu instantly.</div>
+    <div class="overflow-x-auto">
+      <table class="w-full"><thead><tr><th class="w-10" style="padding:10px 12px">⠿</th><th>Image</th><th>Name & Description</th><th>Items</th><th class="hidden sm:table-cell">Order</th><th>Status</th><th>Actions</th></tr></thead></table>
+      <div id="catList"></div>
+    </div>
+    <div id="catEmpty" class="hidden py-14 text-center"><i data-lucide="folder-open" style="width:44px;height:44px;margin:0 auto 10px;display:block;color:var(--muted2)"></i><div class="font-black serif" style="color:var(--muted)">No categories yet</div></div>
+  </div>
+</div>
+
+<!-- ████████ MENU ITEMS ████████ -->
+<div class="page" id="page-menuItems">
+  <div class="flex items-start justify-between mb-5 flex-wrap gap-3">
+    <div><h1 class="font-black text-3xl tracking-tight leading-none serif" style="color:var(--text)">Menu Items.</h1><p class="text-sm mt-1.5" id="miCount" style="color:var(--muted)">Loading…</p></div>
+    <button onclick="openAddItem()" class="btn btn-p flex items-center gap-1.5 text-xs"><i data-lucide="plus" style="width:13px;height:13px"></i>Add Item</button>
+  </div>
+  <div class="flex items-center gap-2 mb-5 flex-wrap">
+    <div class="relative flex-1 min-w-40 max-w-64"><i data-lucide="search" style="width:14px;height:14px;color:var(--muted2);position:absolute;left:12px;top:50%;transform:translateY(-50%)"></i><input id="miSearch" type="text" placeholder="Search by name or category…" class="inp pl-9 h-9 text-xs" style="border-radius:20px" onkeyup="renderMenuItems()"/></div>
+    <select id="miCat" class="inp h-9 text-xs" style="width:auto;border-radius:20px;padding:0 30px 0 12px" onchange="renderMenuItems()"><option value="">All Categories</option><option>Pizza</option><option>Main Course</option><option>Starters</option><option>Beverages</option><option>Desserts</option></select>
+    <select id="miAvail" class="inp h-9 text-xs" style="width:auto;border-radius:20px;padding:0 30px 0 12px" onchange="renderMenuItems()"><option value="">All Status</option><option value="1">Available</option><option value="0">Unavailable</option></select>
+    <button onclick="clearMIF()" class="btn btn-g btn-sm flex items-center gap-1 text-[10px]"><i data-lucide="x" style="width:11px;height:11px"></i>Clear</button>
+  </div>
+  <div id="miGrid" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4"></div>
+  <div id="miEmpty" class="hidden py-14 text-center card-flat"><i data-lucide="search-x" style="width:44px;height:44px;margin:0 auto 10px;display:block;color:var(--muted2)"></i><div class="font-black serif" style="color:var(--muted)">No items found</div><div class="text-sm mt-1" style="color:var(--muted2)">Adjust your filters</div></div>
+</div>
+
+<!-- ████████ DISCOUNTS ████████ -->
+<div class="page" id="page-discounts">
+  <div class="flex items-start justify-between mb-5">
+    <div><h1 class="font-black text-3xl tracking-tight leading-none serif" style="color:var(--text)">Item Discounts.</h1><p class="text-sm mt-1.5" style="color:var(--muted)">Set direct discounts on specific menu items</p></div>
+    <button onclick="toast('Discount creator coming soon!','info')" class="btn btn-p flex items-center gap-1.5 text-xs"><i data-lucide="plus" style="width:13px;height:13px"></i>Create Discount</button>
+  </div>
+  <div class="card-flat overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead><tr><th>Menu Item</th><th>Type</th><th>Value</th><th class="hidden sm:table-cell">Period</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          <tr class="tbl-row"><td><div class="flex items-center gap-3"><div class="w-9 h-9 rounded-xl flex items-center justify-center text-xl flex-shrink-0" style="background:var(--orange2)">🍕</div><div><div class="font-bold" style="color:var(--text)">Margherita Pizza</div><div class="text-xs" style="color:var(--muted)">Pizza category</div></div></div></td><td>Percentage</td><td><span class="font-black text-sm" style="color:var(--orange)">12.5% off</span></td><td class="text-xs hidden sm:table-cell">Mar 15 – Mar 20</td><td><span class="badge bact">● Active</span></td><td><div class="flex gap-1.5"><button onclick="toast('Edit discount','info')" class="btn btn-g btn-xs"><i data-lucide="pencil" style="width:11px;height:11px"></i></button><button onclick="toast('Discount paused','warning')" class="btn btn-g btn-xs"><i data-lucide="pause" style="width:11px;height:11px"></i></button><button onclick="confirmDel('Margherita discount',null)" class="btn btn-d btn-xs"><i data-lucide="trash-2" style="width:11px;height:11px"></i></button></div></td></tr>
+          <tr class="tbl-row"><td><div class="flex items-center gap-3"><div class="w-9 h-9 rounded-xl flex items-center justify-center text-xl flex-shrink-0" style="background:rgba(249,115,22,.1)">🍰</div><div><div class="font-bold" style="color:var(--text)">Gulab Jamun</div><div class="text-xs" style="color:var(--muted)">Desserts category</div></div></div></td><td>Flat</td><td><span class="font-black text-sm" style="color:var(--orange)">₹40 off</span></td><td class="text-xs hidden sm:table-cell">Mar 10 – Mar 31</td><td><span class="badge bact">● Active</span></td><td><div class="flex gap-1.5"><button onclick="toast('Edit discount','info')" class="btn btn-g btn-xs"><i data-lucide="pencil" style="width:11px;height:11px"></i></button><button onclick="toast('Discount paused','warning')" class="btn btn-g btn-xs"><i data-lucide="pause" style="width:11px;height:11px"></i></button><button onclick="confirmDel('Gulab Jamun discount',null)" class="btn btn-d btn-xs"><i data-lucide="trash-2" style="width:11px;height:11px"></i></button></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ████████ COUPONS ████████ -->
+<div class="page" id="page-coupons">
+  <div class="flex items-start justify-between mb-5 flex-wrap gap-3">
+    <div><h1 class="font-black text-3xl tracking-tight leading-none serif" style="color:var(--text)">Coupons.</h1><p class="text-sm mt-1.5" id="cpCount" style="color:var(--muted)">3 active · 1 expired</p></div>
+    <div class="flex items-center gap-2">
+      <div class="relative"><i data-lucide="search" style="width:14px;height:14px;color:var(--muted2);position:absolute;left:12px;top:50%;transform:translateY(-50%)"></i><input type="text" placeholder="Search codes…" class="inp pl-9 h-9 text-xs" style="border-radius:20px;width:148px" onkeyup="filterCoupons(this.value)"/></div>
+      <button onclick="openAddCoupon()" class="btn btn-p flex items-center gap-1.5 text-xs"><i data-lucide="plus" style="width:13px;height:13px"></i>Create Coupon</button>
+    </div>
+  </div>
+  <div id="cpGrid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+</div>
+
+<!-- ████████ OFFERS ████████ -->
+<div class="page" id="page-offers">
+  <div class="flex items-start justify-between mb-5">
+    <div><h1 class="font-black text-3xl tracking-tight leading-none serif" style="color:var(--text)">Offers.</h1><p class="text-sm mt-1.5" style="color:var(--muted)">Special deals, bundles & time-limited promotions</p></div>
+    <button onclick="toast('Offer creator coming soon!','info')" class="btn btn-p flex items-center gap-1.5 text-xs"><i data-lucide="plus" style="width:13px;height:13px"></i>Create Offer</button>
+  </div>
+  <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+    <div class="card p-5 card-interactive" style="border-color:rgba(245,158,11,.2)">
+      <div class="text-[9px] font-black uppercase tracking-widest mb-3 inline-block px-3 py-1 rounded-full" style="background:var(--amber2);color:#fcd34d">Happy Hour</div>
+      <div class="font-black text-lg tracking-tight mb-1 serif" style="color:var(--text)">Happy Hour Deals</div>
+      <div class="text-sm mb-3" style="color:var(--muted)">30% off all beverages · 4–6 PM daily</div>
+      <div class="p-3 rounded-2xl text-sm mb-4 flex items-center gap-2" style="background:var(--amber2);color:#fcd34d"><i data-lucide="clock" style="width:13px;height:13px;flex-shrink:0"></i>Active today: 4:00 – 6:00 PM</div>
+      <div class="flex items-center justify-between"><span class="badge bact">● Running</span><div class="flex gap-1.5"><button onclick="toast('Offer preview','info')" class="btn btn-g btn-xs flex items-center gap-1"><i data-lucide="eye" style="width:11px;height:11px"></i>Preview</button><button onclick="toast('Edit offer','info')" class="btn btn-g btn-xs"><i data-lucide="pencil" style="width:11px;height:11px"></i></button></div></div>
+    </div>
+    <div class="card p-5 card-interactive" style="border-color:rgba(59,130,246,.2)">
+      <div class="text-[9px] font-black uppercase tracking-widest mb-3 inline-block px-3 py-1 rounded-full" style="background:var(--blue2);color:#60a5fa">Buy 1 Get 1</div>
+      <div class="font-black text-lg tracking-tight mb-1 serif" style="color:var(--text)">Pizza BOGO</div>
+      <div class="text-sm mb-3" style="color:var(--muted)">Buy any 1 pizza, get 1 free · Min size Medium</div>
+      <div class="p-3 rounded-2xl text-sm mb-4 flex items-center gap-2" style="background:var(--blue2);color:#60a5fa"><i data-lucide="calendar" style="width:13px;height:13px;flex-shrink:0"></i>Mar 17 – Mar 23, 2026</div>
+      <div class="flex items-center justify-between"><span class="badge ba">● Scheduled</span><div class="flex gap-1.5"><button onclick="toast('Offer preview','info')" class="btn btn-g btn-xs flex items-center gap-1"><i data-lucide="eye" style="width:11px;height:11px"></i>Preview</button><button onclick="toast('Edit offer','info')" class="btn btn-g btn-xs"><i data-lucide="pencil" style="width:11px;height:11px"></i></button></div></div>
+    </div>
+    <div class="card p-5 card-interactive" style="border-color:rgba(139,92,246,.2)">
+      <div class="text-[9px] font-black uppercase tracking-widest mb-3 inline-block px-3 py-1 rounded-full" style="background:var(--purple2);color:#a78bfa">Bundle Deal</div>
+      <div class="font-black text-lg tracking-tight mb-1 serif" style="color:var(--text)">Family Pack</div>
+      <div class="text-sm mb-3" style="color:var(--muted)">2 Mains + 4 Drinks + Dessert = ₹899</div>
+      <div class="p-3 rounded-2xl text-sm mb-4 flex items-center gap-2" style="background:var(--purple2);color:#a78bfa"><i data-lucide="gift" style="width:13px;height:13px;flex-shrink:0"></i>Save ₹280 vs individual pricing</div>
+      <div class="flex items-center justify-between"><span class="badge bact">● Active</span><div class="flex gap-1.5"><button onclick="toast('Offer preview','info')" class="btn btn-g btn-xs flex items-center gap-1"><i data-lucide="eye" style="width:11px;height:11px"></i>Preview</button><button onclick="toast('Edit offer','info')" class="btn btn-g btn-xs"><i data-lucide="pencil" style="width:11px;height:11px"></i></button></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ████████ ANALYTICS ████████ -->
+<div class="page" id="page-analytics">
+  <div class="flex items-start justify-between mb-5 flex-wrap gap-3">
+    <div><h1 class="font-black text-3xl tracking-tight leading-none" style="color:var(--text)">Promo <span class="serif text-orange-500">Analytics.</span></h1><p class="text-sm mt-1.5" style="color:var(--muted)">Performance of your coupons, discounts and offers</p></div>
+    <button onclick="exportOrders()" class="btn btn-g flex items-center gap-1.5 text-xs"><i data-lucide="download" style="width:13px;height:13px"></i>Export Report</button>
+  </div>
+  <div class="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-4">
+    <div class="card p-5 card-interactive sg sg-o relative overflow-hidden"><div class="w-10 h-10 rounded-2xl flex items-center justify-center mb-3" style="background:var(--orange2)"><i data-lucide="indian-rupee" style="width:20px;height:20px;color:var(--orange)"></i></div><div class="text-[10px] font-black uppercase tracking-widest mb-1" style="color:var(--muted2)">Total Discount Given</div><div class="font-black text-3xl leading-none mb-1.5 serif" style="color:var(--text)">₹8.4K</div><div class="text-xs flex items-center gap-1" style="color:#34d399"><i data-lucide="trending-up" style="width:11px;height:11px"></i>+14% this month</div></div>
+    <div class="card p-5 card-interactive sg sg-g relative overflow-hidden"><div class="w-10 h-10 rounded-2xl flex items-center justify-center mb-3" style="background:var(--green2)"><i data-lucide="ticket" style="width:20px;height:20px;color:var(--green)"></i></div><div class="text-[10px] font-black uppercase tracking-widest mb-1" style="color:var(--muted2)">Coupon Redemptions</div><div class="font-black text-3xl leading-none mb-1.5 serif" style="color:var(--text)">98</div><div class="text-xs flex items-center gap-1" style="color:#34d399"><i data-lucide="trending-up" style="width:11px;height:11px"></i>+22% this month</div></div>
+    <div class="card p-5 card-interactive sg sg-b relative overflow-hidden"><div class="w-10 h-10 rounded-2xl flex items-center justify-center mb-3" style="background:var(--blue2)"><i data-lucide="percent" style="width:20px;height:20px;color:var(--blue)"></i></div><div class="text-[10px] font-black uppercase tracking-widest mb-1" style="color:var(--muted2)">Offer Conversion</div><div class="font-black text-3xl leading-none mb-1.5 serif" style="color:var(--text)">34%</div><div class="text-xs flex items-center gap-1" style="color:#34d399"><i data-lucide="trending-up" style="width:11px;height:11px"></i>+5% last month</div></div>
+    <div class="card p-5 card-interactive sg sg-p relative overflow-hidden"><div class="w-10 h-10 rounded-2xl flex items-center justify-center mb-3" style="background:var(--purple2)"><i data-lucide="bar-chart-3" style="width:20px;height:20px;color:var(--purple)"></i></div><div class="text-[10px] font-black uppercase tracking-widest mb-1" style="color:var(--muted2)">Revenue from Promos</div><div class="font-black text-3xl leading-none mb-1.5 serif" style="color:var(--text)">₹42K</div><div class="text-xs flex items-center gap-1" style="color:#34d399"><i data-lucide="trending-up" style="width:11px;height:11px"></i>+18% this month</div></div>
+  </div>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+    <div class="card overflow-hidden">
+      <div class="px-5 py-4 font-black text-sm tracking-tight serif" style="border-bottom:1px solid var(--border);color:var(--text)">Coupon Usage Chart</div>
+      <div class="p-5">
+        <div class="flex items-end gap-3 mb-5" style="height:120px">
+          <div class="flex-1 flex flex-col items-center gap-1.5"><div class="cbar w-full" style="height:23%;background:linear-gradient(to top,var(--orange),#fb923c)"></div><span class="text-[9px] font-semibold" style="color:var(--muted2)">FIRST20</span><span class="text-[9px]" style="color:var(--orange)">23</span></div>
+          <div class="flex-1 flex flex-col items-center gap-1.5"><div class="cbar w-full" style="height:67%;background:linear-gradient(to top,var(--orange),#fb923c)"></div><span class="text-[9px] font-semibold" style="color:var(--muted2)">SAVE50</span><span class="text-[9px]" style="color:var(--orange)">67</span></div>
+          <div class="flex-1 flex flex-col items-center gap-1.5"><div class="cbar w-full" style="height:16%;background:linear-gradient(to top,var(--orange),#fb923c)"></div><span class="text-[9px] font-semibold" style="color:var(--muted2)">WKND15</span><span class="text-[9px]" style="color:var(--orange)">8</span></div>
+          <div class="flex-1 flex flex-col items-center gap-1.5 opacity-25"><div class="cbar w-full" style="height:100%;border:1.5px dashed var(--border);border-radius:6px 6px 0 0;background:transparent"></div><span class="text-[9px] font-semibold" style="color:var(--muted2)">LAUNCH10</span><span class="text-[9px]" style="color:var(--muted2)">100</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card overflow-hidden">
+      <div class="px-5 py-4 font-black text-sm tracking-tight serif" style="border-bottom:1px solid var(--border);color:var(--text)">Discount Impact Trend</div>
+      <div class="p-5">
+        <svg viewBox="0 0 300 120" xmlns="http://www.w3.org/2000/svg" class="w-full" style="height:120px">
+          <defs><linearGradient id="g1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ea580c" stop-opacity=".22"/><stop offset="100%" stop-color="#ea580c" stop-opacity="0"/></linearGradient></defs>
+          <path d="M10,100 L55,75 L100,88 L145,45 L190,58 L235,28 L280,38 L280,118 L10,118Z" fill="url(#g1)"/>
+          <path d="M10,100 L55,75 L100,88 L145,45 L190,58 L235,28 L280,38" fill="none" stroke="#ea580c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="280" cy="38" r="4" fill="#ea580c"/>
+          <circle cx="235" cy="28" r="3" fill="#ea580c" opacity=".5"/>
+          <circle cx="145" cy="45" r="3" fill="#ea580c" opacity=".5"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+  <div class="card overflow-hidden">
+    <div class="px-5 py-4 font-black text-sm tracking-tight serif" style="border-bottom:1px solid var(--border);color:var(--text)">Offer Revenue Breakdown</div>
+    <div class="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x" style="--tw-divide-opacity:1">
+      <div class="p-5" style="border-right:1px solid var(--border)"><div class="text-[10px] mb-2" style="color:var(--muted2)">Happy Hour Deals</div><div class="font-black text-2xl serif mb-1" style="color:var(--text)">₹14,200</div><div class="text-xs text-emerald-400 flex items-center gap-1"><i data-lucide="trending-up" style="width:11px;height:11px"></i>340 orders driven</div></div>
+      <div class="p-5" style="border-right:1px solid var(--border)"><div class="text-[10px] mb-2" style="color:var(--muted2)">Pizza BOGO</div><div class="font-black text-2xl serif mb-1" style="color:var(--text)">₹18,400</div><div class="text-xs text-emerald-400 flex items-center gap-1"><i data-lucide="trending-up" style="width:11px;height:11px"></i>240 orders driven</div></div>
+      <div class="p-5"><div class="text-[10px] mb-2" style="color:var(--muted2)">Family Pack</div><div class="font-black text-2xl serif mb-1" style="color:var(--text)">₹9,600</div><div class="text-xs text-emerald-400 flex items-center gap-1"><i data-lucide="trending-up" style="width:11px;height:11px"></i>120 orders driven</div></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /contentArea -->
+</div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ── MOBILE BOTTOM NAV ── -->
+<nav id="mobileNav">
+  <div style="display:flex;justify-content:space-around">
+    <button class="mn on" data-page="dashboard" onclick="navTo('dashboard',null)"><i data-lucide="layout-dashboard"></i><span>Home</span><div class="mn-active-bar"></div></button>
+    <button class="mn" data-page="orders" onclick="navTo('orders',null)"><i data-lucide="shopping-bag"></i><span>Orders</span><div class="mn-active-bar"></div></button>
+    <button class="mn" data-page="menuItems" onclick="navTo('menuItems',null)"><i data-lucide="utensils"></i><span>Menu</span><div class="mn-active-bar"></div></button>
+    <button class="mn" data-page="coupons" onclick="navTo('coupons',null)"><i data-lucide="gift"></i><span>Promos</span><div class="mn-active-bar"></div></button>
+    <button class="mn" onclick="openMobSidebar()"><i data-lucide="menu"></i><span>More</span><div class="mn-active-bar"></div></button>
+  </div>
+</nav>
+<script src="/static/admin/js/kitchenlab-admin.js"></script>
+</body>
+</html>

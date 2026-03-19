@@ -1,0 +1,1888 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Hakka Treasures | Urban Street Flavours</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@1,600;1,700;1,900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #000000;
+            --text-main: #f8fafc;
+            --bg-accent: #080808;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --drawer-bg: #0a0a0a;
+            --input-placeholder: rgba(255, 255, 255, 0.3);
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --card-bg: #141414;
+            --card-shadow: 0 15px 35px -10px rgba(0,0,0,0.8);
+        }
+
+        .light-mode {
+            --bg-main: #f5f5f4;
+            --text-main: #020617;
+            --bg-accent: #e7e5e4;
+            --border-color: rgba(0, 0, 0, 0.08);
+            --drawer-bg: #f5f5f4;
+            --input-placeholder: rgba(0, 0, 0, 0.4);
+            --glass-bg: rgba(0, 0, 0, 0.02);
+            --card-bg: #ffffff;
+            --card-shadow: 0 4px 20px -5px rgba(0,0,0,0.05);
+        }
+
+        html, body {
+            overscroll-behavior-y: none; /* Native app feel */
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            cursor: none;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            transition: background-color 0.5s ease, color 0.5s ease;
+            font-size: 14px;
+        }
+
+        .serif-italic { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700; }
+
+        .veg-tag { border: 1px solid #16a34a; }
+        .veg-dot { background-color: #16a34a; }
+        .nonveg-tag { border: 1px solid #dc2626; }
+        .nonveg-dot { background-color: #dc2626; }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #ea580c; border-radius: 10px; }
+
+        .reveal { opacity: 0; transform: translateY(30px); transition: all 1s cubic-bezier(0.23, 1, 0.32, 1); }
+        .reveal.active { opacity: 1; transform: translateY(0); }
+
+        #custom-cursor {
+            width: 18px; height: 18px;
+            background: rgba(234, 88, 12, 0.4);
+            border: 1px solid #ea580c;
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            transition: transform 0.1s ease-out, background 0.3s ease;
+            transform: translate(-50%, -50%);
+            display: none;
+        }
+        @media (pointer: coarse) { #custom-cursor { display: none !important; } body { cursor: auto; } }
+
+        /* Professional Card Refresh */
+        .menu-row {
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            border: 1px solid var(--border-color);
+            background-color: var(--card-bg);
+            box-shadow: var(--card-shadow);
+        }
+        .menu-row:hover {
+            transform: translateY(-4px) scale(1.01);
+            border-color: rgba(234, 88, 12, 0.3);
+            background-color: var(--bg-accent);
+            box-shadow: 0 20px 40px -15px rgba(0,0,0,0.1);
+        }
+        .menu-row:hover .add-btn-circle {
+            background-color: #ea580c;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        #ai-concierge-modal { transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1), opacity 0.4s ease; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* NATIVE APP BOTTOM SHEET LOGIC */
+        .drawer-panel {
+            transform: translateX(100%);
+            transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1);
+        }
+        .drawer-panel.is-open {
+            transform: translateX(0);
+        }
+
+        @media (max-width: 768px) {
+            .drawer-panel {
+                top: auto !important;
+                bottom: 0 !important;
+                height: 90dvh !important;
+                width: 100% !important;
+                border-radius: 2rem 2rem 0 0 !important;
+                transform: translateY(100%);
+                border-left: none !important;
+                border-top: 1px solid var(--border-color);
+            }
+            .drawer-panel.is-open {
+                transform: translateY(0);
+            }
+
+            #ai-concierge-modal {
+                margin-top: auto;
+                border-radius: 2.5rem 2.5rem 0 0;
+                transform: translateY(100%) scale(1) !important;
+            }
+            #ai-concierge-overlay:not(.opacity-0) #ai-concierge-modal {
+                transform: translateY(0) scale(1) !important;
+            }
+
+            body { padding-bottom: 5.5rem; } /* Space for bottom nav */
+        }
+
+        .ghost-input {
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 0;
+            width: 100%;
+            font-size: 0.9rem;
+            outline: none;
+            color: var(--text-main);
+            transition: border-color 0.4s ease, transform 0.3s ease;
+            font-weight: 500;
+        }
+        .ghost-input::placeholder { color: var(--input-placeholder); }
+        .ghost-input:focus { border-color: #ea580c; }
+
+        .category-btn {
+            background-color: var(--glass-bg);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+        }
+        .category-btn.active {
+            background-color: #ea580c !important;
+            color: white !important;
+            border-color: #ea580c;
+            box-shadow: 0 8px 20px -4px rgba(234, 88, 12, 0.4);
+        }
+
+        .custom-radio { position: absolute; opacity: 0; width: 0; height: 0; }
+        .custom-radio:checked + label { border-color: #ea580c !important; background: rgba(234, 88, 12, 0.08); }
+        .custom-radio:checked + label .radio-circle { background: #ea580c; border-color: #ea580c; }
+
+        .status-hub-glow { animation: hub-glow 2s infinite ease-in-out; }
+        @keyframes hub-glow {
+            0% { box-shadow: 0 0 0 0 rgba(234, 88, 12, 0.4); }
+            70% { box-shadow: 0 0 0 15px rgba(234, 88, 12, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(234, 88, 12, 0); }
+        }
+
+        .dot-flashing {
+            position: relative; width: 8px; height: 8px; border-radius: 5px;
+            background-color: #ea580c; color: #ea580c;
+            animation: dot-flashing 1s infinite linear alternate; animation-delay: .5s;
+        }
+        .dot-flashing::before, .dot-flashing::after { content: ''; display: inline-block; position: absolute; top: 0; }
+        .dot-flashing::before { left: -15px; width: 8px; height: 8px; border-radius: 5px; background-color: #ea580c; animation: dot-flashing 1s infinite alternate; animation-delay: 0s; }
+        .dot-flashing::after { left: 15px; width: 8px; height: 8px; border-radius: 5px; background-color: #ea580c; animation: dot-flashing 1s infinite alternate; animation-delay: 1s; }
+        @keyframes dot-flashing { 0% { background-color: #ea580c; } 50%, 100% { background-color: rgba(234, 88, 12, 0.2); } }
+
+        .vertical-text { writing-mode: vertical-rl; text-orientation: mixed; }
+
+        @media (max-width: 768px) {
+            .menu-row { padding: 0.85rem !important; border-radius: 1.5rem; }
+            .menu-item-img { width: 75px !important; height: 75px !important; }
+        }
+
+        .stagger-1 { transition-delay: 0.1s; }
+        .stagger-2 { transition-delay: 0.2s; }
+        .stagger-3 { transition-delay: 0.3s; }
+        .stagger-4 { transition-delay: 0.4s; }
+
+        .editorial-input::placeholder { color: rgba(148, 163, 184, 0.5); font-weight: 500; }
+
+        /* Smart Menu Scroll States */
+        #menu-sticky-inner { transition: padding 0.5s cubic-bezier(0.23, 1, 0.32, 1); }
+        #menu-main-title { transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1); transform-origin: left center; }
+        #menu-promo-banner { transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1); transform-origin: top; }
+
+        .menu-scrolled #menu-sticky-inner {
+            padding-top: 0.75rem !important;
+            padding-bottom: 0.75rem !important;
+            align-items: center !important;
+        }
+
+        .menu-scrolled #menu-main-title {
+            font-size: 1.5rem !important;
+            flex-direction: row !important;
+            gap: 0.4rem !important;
+        }
+
+        .menu-scrolled #menu-promo-banner {
+            height: 0 !important;
+            opacity: 0 !important;
+            border-width: 0 !important;
+            margin: 0 !important;
+            pointer-events: none;
+        }
+
+        @media (max-width: 768px) {
+            .menu-scrolled #menu-sticky-inner {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 0.75rem !important;
+            }
+            .menu-scrolled #menu-main-title {
+                font-size: 1.75rem !important;
+                margin-bottom: 0 !important;
+            }
+        }
+
+        /* AI Glow Effect */
+        .ai-glow-border {
+            position: relative;
+        }
+        .ai-glow-border::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            padding: 2px;
+            background: linear-gradient(45deg, #ea580c, #ef4444, #eab308, #ea580c);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            background-size: 300% 300%;
+            animation: gradient-shift 4s ease infinite;
+            pointer-events: none;
+        }
+        @keyframes gradient-shift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+    </style>
+</head>
+<body class="selection:bg-orange-500 selection:text-white overflow-x-hidden text-left">
+
+<div id="custom-cursor"></div>
+
+<!-- FLOATING FESTIVE BANNER (Zero Layout Space) -->
+<div class="flex fixed top-1/4 md:top-1/3 right-0 z-[300] translate-x-[calc(100%-32px)] md:translate-x-[calc(100%-40px)] hover:translate-x-0 active:translate-x-0 transition-transform duration-500 items-center shadow-2xl cursor-hover" onclick="copyPromoCode()">
+    <div class="w-8 md:w-10 h-20 md:h-24 bg-orange-600 text-white flex flex-col items-center justify-center rounded-l-xl md:rounded-l-2xl border-y border-l border-white/20 shadow-[0_0_20px_rgba(234,88,12,0.4)]">
+        <i data-lucide="ticket" class="w-3 h-3 md:w-4 md:h-4 mb-1 md:mb-2 -rotate-90"></i>
+        <span class="vertical-text text-[6px] md:text-[8px] font-black tracking-widest uppercase">Offer</span>
+    </div>
+    <div class="bg-slate-900 border-y border-r border-slate-800 p-4 md:p-5 rounded-r-none h-20 md:h-24 flex flex-col justify-center w-40 md:w-48 shadow-inner">
+        <span class="text-orange-500 font-black uppercase tracking-[0.2em] text-[8px] md:text-[9px] block mb-1">Festive Special</span>
+        <span class="text-white font-black text-lg md:text-xl leading-none mb-1">15% OFF</span>
+        <span id="floating-banner-text" class="text-slate-400 text-[7px] md:text-[8px] uppercase tracking-widest">Code: HAKKA15</span>
+    </div>
+</div>
+
+<!-- GLOBAL FLOATING CART HUB (Mobile Full-Width, Desktop Pill) -->
+<div id="floating-cart-hub" class="fixed bottom-[6rem] left-4 right-4 md:bottom-10 md:left-auto md:right-10 z-[350] transition-all duration-500 transform translate-y-20 opacity-0 pointer-events-none">
+    <button onclick="toggleCartDrawer()" class="w-full md:w-auto bg-orange-600 text-white p-4 md:p-6 rounded-2xl md:rounded-full shadow-[0_10px_40px_-10px_rgba(234,88,12,0.8)] flex items-center justify-between md:justify-start gap-3 md:gap-4 active:scale-95 transition-all hover:bg-orange-700 hover:shadow-[0_15px_50px_-10px_rgba(234,88,12,1)] cursor-hover group">
+        <div class="flex items-center gap-3">
+            <div class="relative">
+                <i data-lucide="shopping-bag" class="w-5 h-5 md:w-6 md:h-6 text-white group-hover:scale-110 transition-transform"></i>
+                <span id="hub-cart-count" class="absolute -top-2 -right-2 bg-white text-orange-600 text-[10px] font-black w-4 h-4 md:w-5 md:h-5 flex items-center justify-center rounded-full shadow-md border border-orange-600">0</span>
+            </div>
+            <span class="block md:hidden text-xs font-black uppercase tracking-widest text-white">View Bag</span>
+        </div>
+        <div class="pr-2 text-right md:text-left">
+            <span class="hidden md:block text-[8px] font-black uppercase tracking-widest opacity-80 text-white mb-0.5">Review Bag</span>
+            <span id="hub-cart-total" class="block text-base md:text-lg font-black leading-none text-white">$0.00</span>
+        </div>
+    </button>
+</div>
+
+<!-- ITEM DETAIL DRAWER (Native App Bottom Sheet on Mobile) -->
+<div id="item-drawer-overlay" class="fixed inset-0 z-[400] hidden bg-black/70 backdrop-blur-sm" onclick="closeItemDrawer()"></div>
+<div id="item-drawer" class="fixed top-0 right-0 h-full w-full sm:max-w-lg z-[410] shadow-2xl border-l border-white/5 flex flex-col drawer-panel" style="background-color: var(--drawer-bg);">
+    <div class="p-6 md:p-8 border-b flex justify-between items-center" style="border-color: var(--border-color);">
+        <div>
+            <h3 id="drawer-item-name" class="text-xl font-black uppercase tracking-tighter" style="color: var(--text-main);">Dish Name</h3>
+            <p id="drawer-item-price" class="text-orange-500 font-bold tracking-[0.2em] text-[10px] uppercase">$0.00</p>
+        </div>
+        <button onclick="closeItemDrawer()" class="w-10 h-10 rounded-full flex items-center justify-center transition-all cursor-hover group" style="background-color: var(--bg-accent);">
+            <i data-lucide="x" class="w-4 h-4 text-slate-400 group-hover:text-orange-600 transition-colors"></i>
+        </button>
+    </div>
+    <div class="flex-grow overflow-y-auto p-6 md:p-8 space-y-12 no-scrollbar">
+        <div class="space-y-8">
+
+            <!-- ✨ GEMINI API FEATURE 1: AI SOMMELIER PAIRING -->
+            <div class="ai-glow-border rounded-2xl p-5 cursor-hover group transition-all" style="background-color: var(--glass-bg);" onclick="getAIPairing()">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="sparkles" class="w-4 h-4 text-orange-500"></i>
+                        <h5 class="text-[9px] font-black uppercase tracking-[0.4em] text-orange-500">AI Sommelier</h5>
+                    </div>
+                    <span class="text-[8px] uppercase tracking-widest opacity-40 group-hover:opacity-100 transition-opacity" style="color: var(--text-main);">Tap to Ask Chef</span>
+                </div>
+                <p id="ai-pairing-text" class="text-xs italic font-medium leading-relaxed hidden mt-4" style="color: var(--text-main);"></p>
+                <div id="ai-pairing-loader" class="hidden mt-4">
+                    <span class="animate-pulse text-xs font-bold text-orange-500 tracking-widest uppercase">Consulting the Oracle...</span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3 text-left">
+                <span class="w-1.5 h-6 bg-orange-600 rounded-full"></span>
+                <h4 class="text-sm font-black uppercase tracking-tighter" style="color: var(--text-main);">Customize Discovery</h4>
+            </div>
+
+            <div class="space-y-6 text-left">
+                <h5 class="text-[9px] font-black uppercase tracking-[0.4em] text-slate-500">Palate Preference</h5>
+                <div class="space-y-3">
+                    <div class="relative">
+                        <input type="radio" name="flavor" id="f-orig" class="hidden custom-radio" checked>
+                        <label for="f-orig" class="flex items-center justify-between p-4 border border-white/5 rounded-2xl cursor-hover transition-all" style="border-color: var(--border-color);">
+                            <span class="font-bold text-xs" style="color: var(--text-main);">Signature Wok Heritage</span>
+                            <div class="radio-circle w-5 h-5 rounded-full border-2 border-slate-400 transition-all"></div>
+                        </label>
+                    </div>
+                    <div class="relative">
+                        <input type="radio" name="flavor" id="f-hot" class="hidden custom-radio">
+                        <label for="f-hot" class="flex items-center justify-between p-4 border border-white/5 rounded-2xl cursor-hover transition-all" style="border-color: var(--border-color);">
+                            <span class="font-bold text-xs" style="color: var(--text-main);">Bold Heat Infusion</span>
+                            <div class="radio-circle w-5 h-5 rounded-full border-2 border-slate-400 transition-all"></div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-6 text-left">
+                <h5 class="text-[9px] font-black uppercase tracking-[0.4em] text-slate-500">Spice Intention</h5>
+                <div class="flex gap-2">
+                    <div class="relative flex-1">
+                        <input type="radio" name="spice" id="s-mild" class="hidden custom-radio" checked>
+                        <label for="s-mild" class="px-5 py-3 border border-white/5 rounded-full font-black text-[9px] uppercase cursor-hover transition-all block text-center" style="border-color: var(--border-color); color: var(--text-main);">Mild</label>
+                    </div>
+                    <div class="relative flex-1">
+                        <input type="radio" name="spice" id="s-hot" class="hidden custom-radio">
+                        <label for="s-hot" class="px-5 py-3 border border-white/5 rounded-full font-black text-[9px] uppercase cursor-hover transition-all block text-center" style="border-color: var(--border-color); color: var(--text-main);">Spicy</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-4 text-left">
+                <div class="flex justify-between items-end">
+                    <h5 class="text-[9px] font-black uppercase tracking-[0.4em] text-slate-500">Kitchen Notes</h5>
+                    <button onclick="formatKitchenNote()" class="text-orange-500 text-[8px] font-bold uppercase tracking-widest flex items-center gap-1 hover:text-orange-400 transition-colors cursor-hover"><i data-lucide="sparkles" class="w-3 h-3"></i> Smart Format</button>
+                </div>
+                <textarea id="item-kitchen-note" placeholder="Allergies or specific requests for the Chef..." class="w-full bg-transparent border rounded-2xl p-5 text-xs outline-none focus:border-orange-600 transition-all h-28 resize-none" style="border-color: var(--border-color); color: var(--text-main);"></textarea>
+                <p id="note-loader" class="hidden text-orange-500 text-[10px] italic mt-1 font-bold animate-pulse tracking-widest uppercase text-right">Translating...</p>
+            </div>
+        </div>
+    </div>
+    <div class="p-6 md:p-8 border-t" style="border-color: var(--border-color); background-color: var(--bg-accent);">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center bg-black/5 rounded-2xl p-1 border w-full sm:w-auto justify-between" style="border-color: var(--border-color);">
+                <button onclick="updateDrawerQty(-1)" class="w-10 h-10 rounded-xl flex items-center justify-center cursor-hover hover:bg-orange-600 transition-colors"><i data-lucide="minus" class="w-4 h-4" style="color: var(--text-main);"></i></button>
+                <span id="drawer-qty" class="text-lg font-black w-12 text-center" style="color: var(--text-main);">1</span>
+                <button onclick="updateDrawerQty(1)" class="w-10 h-10 rounded-xl flex items-center justify-center cursor-hover hover:bg-orange-600 transition-colors"><i data-lucide="plus" class="w-4 h-4" style="color: var(--text-main);"></i></button>
+            </div>
+            <button onclick="confirmDrawerItem()" class="w-full sm:flex-grow bg-orange-600 text-white font-black py-4 rounded-2xl uppercase tracking-[0.2em] text-[9px] cursor-hover shadow-xl active:scale-[0.98]">Confirm Selection <span id="drawer-subtotal" class="ml-2 opacity-60">$0.00</span></button>
+        </div>
+    </div>
+</div>
+
+<!-- ✨ GEMINI API FEATURE 2: AI CONCIERGE MODAL -->
+<div id="ai-concierge-overlay" class="fixed inset-0 z-[500] hidden bg-black/80 backdrop-blur-sm flex items-end md:items-center justify-center md:p-4 transition-opacity opacity-0" onclick="closeAIConcierge(event)">
+    <div id="ai-concierge-modal" class="w-full max-w-xl md:rounded-[3rem] border shadow-2xl flex flex-col overflow-hidden transition-all drawer-panel" style="background-color: var(--bg-main); border-color: var(--border-color);" onclick="event.stopPropagation()">
+        <div class="p-8 border-b ai-glow-border relative overflow-hidden" style="border-color: var(--border-color); background-color: var(--bg-accent);">
+            <div class="absolute inset-0 bg-gradient-to-r from-orange-600/10 to-transparent pointer-events-none"></div>
+            <div class="relative z-10 flex justify-between items-start">
+                <div>
+                    <span class="text-orange-500 font-black uppercase tracking-[0.4em] text-[9px] mb-2 flex items-center gap-2"><i data-lucide="sparkles" class="w-3 h-3"></i> AI Taste Concierge</span>
+                    <h3 class="text-3xl font-black uppercase tracking-tighter leading-none" style="color: var(--text-main);">What are you <br><span class="text-orange-600 serif-italic">craving?</span></h3>
+                </div>
+                <button onclick="closeAIConcierge()" class="w-10 h-10 rounded-full flex items-center justify-center transition-all cursor-hover group bg-black/10">
+                    <i data-lucide="x" class="w-4 h-4 text-slate-400 group-hover:text-orange-600 transition-colors"></i>
+                </button>
+            </div>
+        </div>
+        <div class="p-8 space-y-6">
+            <p class="text-xs leading-relaxed text-slate-500">Tell our AI chef what you're in the mood for, and we will analyze the entire menu to find your perfect match.</p>
+            <div class="relative">
+                <textarea id="ai-concierge-input" placeholder="e.g. 'I want something extremely spicy with chicken' or 'A light, refreshing vegetarian dish'" class="w-full bg-transparent border rounded-2xl p-5 text-sm outline-none focus:border-orange-600 transition-colors h-32 resize-none cursor-hover" style="border-color: var(--border-color); color: var(--text-main);"></textarea>
+            </div>
+            <div id="ai-concierge-result" class="hidden p-5 rounded-2xl border bg-black/5" style="border-color: var(--border-color);">
+                <div id="ai-concierge-loader" class="flex flex-col items-center justify-center py-6 space-y-4">
+                    <div class="dot-flashing"></div>
+                    <span class="text-[9px] font-black uppercase tracking-[0.3em] text-orange-500">Analyzing Menu...</span>
+                </div>
+                <p id="ai-concierge-response" class="text-sm leading-relaxed hidden italic" style="color: var(--text-main);"></p>
+            </div>
+            <button onclick="askAIConcierge()" class="w-full bg-orange-600 text-white font-black py-5 rounded-2xl uppercase tracking-widest text-[10px] hover:bg-orange-700 transition-all shadow-xl active:scale-[0.98] cursor-hover flex items-center justify-center gap-2">
+                Discover Match <i data-lucide="sparkles" class="w-4 h-4"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- GLOBAL CART DRAWER -->
+<div id="cart-drawer-overlay" class="fixed inset-0 z-[400] hidden bg-black/80 backdrop-blur-sm" onclick="toggleCartDrawer()"></div>
+<div id="cart-drawer" class="fixed top-0 right-0 h-full w-full sm:max-w-lg z-[410] shadow-2xl border-l border-white/5 flex flex-col drawer-panel" style="background-color: var(--drawer-bg);">
+
+    <!-- STAGE 1: THE BAG -->
+    <div id="bag-stage" class="h-full flex flex-col">
+        <div class="p-8 border-b flex justify-between items-center" style="border-color: var(--border-color);">
+            <div><h3 class="text-2xl font-black uppercase tracking-tighter" style="color: var(--text-main);">The Bag</h3><p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mt-1 italic">Hakka Treasures Pickup</p></div>
+            <button onclick="toggleCartDrawer()" class="w-12 h-12 rounded-full flex items-center justify-center transition-all cursor-hover group" style="background-color: var(--bg-accent);"><i data-lucide="x" class="w-6 h-6 text-slate-400 group-hover:text-orange-600"></i></button>
+        </div>
+        <div class="flex-grow overflow-y-auto p-6 md:p-8 space-y-4 no-scrollbar" id="bag-items-list"></div>
+        <div class="p-8 border-t space-y-4" style="border-color: var(--border-color); background-color: var(--bg-accent);">
+            <div class="flex justify-between items-end"><span class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 italic">Total Discovery</span><span id="bag-total" class="text-4xl font-black tracking-tighter leading-none" style="color: var(--text-main);">$0.00</span></div>
+            <p id="empty-bag-notif" class="text-red-500 text-[10px] font-bold uppercase tracking-widest text-center hidden mb-2">Your bag is empty</p>
+            <button id="checkout-btn" onclick="goToCheckout()" class="w-full bg-orange-600 text-white font-black py-6 rounded-2xl uppercase tracking-widest text-[10px] shadow-2xl active:scale-[0.98] transition-all hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed">Checkout Order</button>
+        </div>
+    </div>
+
+    <!-- STAGE 2: CHECKOUT & ADDRESS -->
+    <div id="checkout-stage" class="h-full flex flex-col hidden text-left">
+        <div class="p-8 border-b flex items-center gap-4" style="border-color: var(--border-color);">
+            <button onclick="goToBag()" class="w-10 h-10 rounded-full flex items-center justify-center bg-black/5 hover:bg-black/10 transition-colors"><i data-lucide="chevron-left" class="w-5 h-5" style="color: var(--text-main);"></i></button>
+            <h3 class="text-2xl font-black uppercase tracking-tighter" style="color: var(--text-main);">Finalize Order</h3>
+        </div>
+        <div class="flex-grow overflow-y-auto p-8 space-y-12 no-scrollbar">
+
+            <div class="space-y-8">
+                <h4 class="text-[9px] font-black uppercase tracking-[0.4em] text-orange-600 text-left">Verification</h4>
+                <div class="space-y-4">
+                    <input type="text" id="chk-name" placeholder="YOUR FULL NAME" class="ghost-input">
+                    <input type="email" id="chk-email" placeholder="MAIL ADDRESS" class="ghost-input">
+                    <input type="tel" id="chk-phone" placeholder="PHONE NUMBER" class="ghost-input">
+                </div>
+            </div>
+
+            <div class="space-y-6 text-left">
+                <div class="flex justify-between items-center">
+                    <h4 class="text-[9px] font-black uppercase tracking-[0.4em] text-slate-500">Pickup Address</h4>
+                    <button onclick="getUserLocation()" class="text-[9px] font-black uppercase tracking-widest text-orange-600 flex items-center gap-2 hover:opacity-70 transition-all cursor-hover"><i data-lucide="navigation" class="w-3 h-3 text-orange-600"></i> Use GPS</button>
+                </div>
+                <div class="relative group">
+                    <input type="text" id="chk-address" placeholder="ENTER ADDRESS MANUALLY" class="ghost-input">
+                    <i data-lucide="map-pin" class="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                </div>
+            </div>
+
+            <div class="space-y-4 text-left">
+                <h4 class="text-[9px] font-black uppercase tracking-[0.4em] text-slate-500">Promo Code</h4>
+                <div class="flex gap-3">
+                    <input type="text" id="promo-input" placeholder="ENTER CODE" class="ghost-input flex-1 uppercase text-sm border-b" style="border-color: var(--border-color);">
+                    <button onclick="applyPromoCode()" class="px-6 rounded-2xl text-[9px] font-black uppercase tracking-widest bg-black/5 hover:bg-orange-600 hover:text-white transition-all cursor-hover" style="color: var(--text-main);">Apply</button>
+                </div>
+                <p id="promo-message" class="text-[10px] hidden font-bold"></p>
+            </div>
+
+            <div class="space-y-6 text-left">
+                <h4 class="text-[9px] font-black uppercase tracking-[0.4em] text-slate-500">Detailed Invoice</h4>
+                <div class="bg-black/5 border rounded-[2.5rem] p-8 space-y-6" style="background-color: var(--glass-bg); border-color: var(--border-color);">
+                    <div id="invoice-items" class="space-y-4"></div>
+                    <div class="pt-6 border-t space-y-3" style="border-color: var(--border-color);">
+                        <div class="flex justify-between text-[11px] font-bold text-slate-500 italic"><span class="truncate">Subtotal</span><span id="inv-subtotal" class="shrink-0" style="color: var(--text-main);">$0.00</span></div>
+                        <div id="inv-discount-row" class="flex justify-between text-[11px] font-bold text-green-500 italic hidden"><span class="truncate">Reward Discount Applied</span><span id="inv-discount" class="shrink-0">-$0.00</span></div>
+                        <div class="flex justify-between text-[11px] font-bold text-slate-500 italic"><span class="truncate">Tax (8.25%)</span><span id="inv-tax" class="shrink-0" style="color: var(--text-main);">$0.00</span></div>
+                        <div class="flex justify-between items-end pt-4"><span class="text-[10px] font-black uppercase tracking-widest" style="color: var(--text-main);">Final Total</span><span id="inv-total" class="text-4xl font-black text-orange-600 leading-none shrink-0">$0.00</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="p-8 border-t" style="border-color: var(--border-color); background-color: var(--bg-accent);">
+            <p id="chk-notif" class="text-red-500 text-[10px] font-bold uppercase tracking-widest mb-4 hidden"></p>
+            <button onclick="confirmOrder()" class="w-full bg-orange-600 text-white font-black py-6 rounded-2xl uppercase tracking-widest text-[10px] shadow-2xl active:scale-[0.98]">Confirm Pickup</button>
+        </div>
+    </div>
+
+    <!-- STAGE 3: LIVE TRACKING & READY -->
+    <div id="tracking-stage" class="h-full flex flex-col hidden text-center">
+        <div class="flex-grow overflow-y-auto p-8 space-y-12 no-scrollbar text-center">
+            <div class="flex flex-col items-center">
+                <div id="status-icon-box" class="w-24 h-24 rounded-full bg-orange-600/10 flex items-center justify-center mb-8 shadow-2xl border border-orange-600/20"><i data-lucide="chef-hat" id="status-icon" class="w-10 h-10 text-orange-600"></i></div>
+                <h2 id="status-title" class="text-4xl font-black uppercase tracking-tighter mb-4" style="color: var(--text-main);">Processing.</h2>
+                <p id="status-desc" class="text-slate-500 text-[11px] uppercase tracking-widest leading-loose max-w-xs mx-auto">Chef is currently preparing your treasures.</p>
+            </div>
+
+            <div id="tracking-ui-box" class="w-full space-y-6">
+                <div class="flex justify-between items-end px-2"><span class="text-[8px] font-black uppercase tracking-widest text-slate-500">Estimate</span><span id="ready-time-val" class="text-xl font-black text-orange-600 uppercase">18-22 MINS</span></div>
+                <div class="h-[2px] w-full bg-black/5 rounded-full relative overflow-hidden"><div id="status-progress" class="absolute h-full bg-orange-600 transition-all duration-1000" style="width: 20%;"></div></div>
+                <div id="preparing-dots" class="flex justify-center py-4"><div class="dot-flashing"></div></div>
+            </div>
+
+            <div id="ready-invoice-view" class="space-y-6 text-left pt-6 border-t text-left" style="border-color: var(--border-color);">
+                <h4 class="text-[9px] font-black uppercase tracking-[0.4em] text-slate-500 text-left">Discovery Summary</h4>
+                <div id="ready-items-list" class="space-y-3"></div>
+                <div class="bg-black/5 p-6 rounded-2xl border" style="background-color: var(--glass-bg); border-color: var(--border-color);">
+                    <div class="flex justify-between text-xs" style="color: var(--text-main);"><span>Total Value Collected</span><span id="ready-total-val" class="font-black text-orange-600 shrink-0">$0.00</span></div>
+                </div>
+            </div>
+
+            <button id="pickup-sim-btn" onclick="orderPickedUp()" class="w-full hidden py-5 bg-orange-600 text-white font-black rounded-2xl uppercase text-[10px] tracking-widest hover:bg-orange-700 transition-all shadow-2xl">Confirm Pickup Received</button>
+
+            <!-- Feedback Hub -->
+            <div id="review-hub" class="space-y-10 hidden pt-12 border-t text-left" style="border-color: var(--border-color);">
+                <div class="space-y-4"><h3 class="text-3xl font-black uppercase tracking-tighter" style="color: var(--text-main);">Enjoy!</h3><p class="text-slate-500 text-xs leading-relaxed text-left">We hope your treasures were perfect. <span id="feedback-note-mention" class="text-orange-600 block mt-2 italic font-bold text-left"></span></p></div>
+                <div class="space-y-6 text-left"><h4 class="text-[9px] font-black uppercase tracking-[0.4em] text-slate-500">Discovery Quality</h4><div class="flex gap-4 justify-between text-orange-600"><button class="cursor-hover transition-transform hover:scale-125"><i data-lucide="star" class="w-8 h-8"></i></button><button class="cursor-hover transition-transform hover:scale-125"><i data-lucide="star" class="w-8 h-8"></i></button><button class="cursor-hover transition-transform hover:scale-125"><i data-lucide="star" class="w-8 h-8"></i></button><button class="cursor-hover transition-transform hover:scale-125"><i data-lucide="star" class="w-8 h-8"></i></button><button class="cursor-hover transition-transform hover:scale-125"><i data-lucide="star" class="w-8 h-8"></i></button></div></div>
+                <div class="space-y-4 text-left">
+                    <h4 class="text-[9px] font-black uppercase tracking-[0.4em] text-slate-500 text-left">Detailed Remarks</h4>
+                    <textarea id="feedback-text" placeholder="How was the flavor and heat experience?" class="w-full bg-transparent border rounded-2xl p-5 text-xs outline-none focus:border-orange-600 transition-all h-28 resize-none" style="border-color: var(--border-color); color: var(--text-main);"></textarea>
+                    <p id="feedback-notif" class="text-red-500 text-[10px] font-bold uppercase tracking-widest hidden mt-2"></p>
+                </div>
+                <button id="submit-review-btn" onclick="submitFeedback()" class="w-full py-6 bg-orange-600 text-white font-black rounded-2xl uppercase text-[10px] tracking-widest shadow-xl cursor-hover flex justify-center items-center gap-2">Submit Rating</button>
+            </div>
+
+            <!-- Thank You Stage -->
+            <div id="thank-you-stage" class="hidden space-y-10 py-20">
+                <div class="w-20 h-20 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-green-600/20"><i data-lucide="check" class="w-10 h-10 text-white"></i></div>
+                <h3 class="text-3xl font-black uppercase tracking-tighter" style="color: var(--text-main);">Treasured.</h3>
+                <p class="text-slate-500 text-xs uppercase tracking-widest leading-loose text-center">Your experience has been logged. Thank you for the support.</p>
+
+                <!-- ✨ AI Chef Response Container -->
+                <div id="ai-chef-response-container" class="hidden max-w-sm mx-auto p-6 rounded-[2rem] border bg-black/5 text-center mt-8" style="border-color: var(--border-color); background-color: var(--glass-bg);">
+                    <div class="flex items-center justify-center gap-2 mb-4">
+                        <i data-lucide="sparkles" class="w-4 h-4 text-orange-500"></i>
+                        <h4 class="text-[9px] font-black uppercase tracking-[0.4em] text-orange-500">A Note from the Chef</h4>
+                    </div>
+                    <p id="ai-chef-response" class="text-xs leading-relaxed italic text-slate-500 font-medium"></p>
+                </div>
+
+                <button onclick="resetFlow(); toggleCartDrawer();" class="mt-10 px-12 py-5 border font-black rounded-2xl uppercase text-[10px] tracking-widest hover:bg-orange-600 hover:text-white transition-all shadow-xl cursor-hover" style="color: var(--text-main); border-color: var(--border-color); background-color: var(--glass-bg);">Explore Menu</button>
+            </div>
+        </div>
+        <div id="discovery-hub-footer" class="p-8 border-t" style="border-color: var(--border-color); background-color: var(--bg-accent);"><button onclick="showPage('landing'); toggleCartDrawer();" class="w-full font-black py-6 rounded-2xl uppercase tracking-widest text-[9px] border cursor-hover" style="color: var(--text-main); border-color: var(--border-color); background-color: var(--glass-bg);">Minimize Hub</button></div>
+    </div>
+</div>
+
+<!-- HOME STATUS HUB BANNER -->
+<div id="home-status-banner" class="fixed top-20 left-1/2 -translate-x-1/2 z-[90] w-[92%] max-w-xl hidden">
+    <div class="bg-orange-600 text-white px-8 py-4 rounded-full shadow-2xl flex items-center justify-between border border-white/20 backdrop-blur-xl status-hub-glow cursor-hover">
+        <div class="flex items-center gap-4 text-left"><div class="relative"><i data-lucide="chef-hat" id="home-status-icon" class="w-5 h-5 text-white"></i></div><span id="home-status-text" class="text-[10px] font-black uppercase tracking-widest text-white">Preparing Discovery...</span></div>
+        <button onclick="toggleCartDrawer()" class="text-[9px] font-black uppercase border-b border-white/40 hover:border-white transition-all text-white shrink-0">Details</button>
+    </div>
+</div>
+
+<!-- Navigation -->
+<nav class="fixed top-0 w-full z-[100] border-b transition-all duration-500" id="main-nav" style="background-color: var(--bg-main); border-color: var(--border-color);">
+    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div class="flex items-center gap-2 cursor-hover" onclick="showPage('landing'); window.scrollTo(0,0);">
+            <div class="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center shadow-lg shadow-orange-600/20"><i data-lucide="flame" class="w-4 h-4 text-white"></i></div>
+            <span class="text-lg font-black uppercase tracking-tighter leading-none" style="color: var(--text-main);">Hakka <br class="hidden md:block"> Treasures</span>
+        </div>
+        <div id="nav-links" class="hidden md:flex items-center gap-8 text-[9px] font-black uppercase tracking-[0.3em]">
+            <button onclick="goToSection('vibe')" class="text-slate-400 hover:text-orange-500 transition-colors cursor-hover uppercase">The Vibe</button>
+            <button onclick="goToSection('heritage')" class="text-slate-400 hover:text-orange-500 transition-colors cursor-hover uppercase">Our Story</button>
+            <button onclick="goToSection('favourites')" class="text-slate-400 hover:text-orange-500 transition-colors cursor-hover uppercase">Signatures</button>
+            <button onclick="showPage('menu')" class="text-slate-400 hover:text-orange-500 transition-colors cursor-hover uppercase">The Menu</button>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 text-left">
+            <button onclick="toggleTheme()" class="p-2 text-slate-400 hover:text-orange-600 transition-colors cursor-hover"><i data-lucide="sun" id="theme-icon" class="w-4 h-4 text-left"></i></button>
+            <button onclick="toggleCartDrawer()" class="hidden md:block relative p-2 text-slate-400 hover:text-orange-500 cursor-hover">
+                <i data-lucide="shopping-bag" class="w-4 h-4" style="color: var(--text-main);"></i>
+                <span id="cart-badge-nav" class="absolute top-1 right-1 bg-orange-600 text-[8px] w-3.5 h-3.5 flex items-center justify-center rounded-full text-white font-black opacity-0 transition-opacity">0</span>
+            </button>
+            <button id="nav-order-btn" onclick="showPage('menu')" class="bg-orange-600 text-white px-4 md:px-6 py-2 rounded-full text-[9px] font-black uppercase tracking-widest hover:bg-orange-500 transition-all cursor-hover shadow-lg">Order Now</button>
+        </div>
+    </div>
+</nav>
+
+<!-- MOBILE BOTTOM NAV (App Feel) -->
+<div class="md:hidden fixed bottom-0 left-0 w-full z-[150] backdrop-blur-2xl border-t flex justify-around items-center h-[5.5rem] pb-4 px-2" style="background-color: var(--bg-main); border-color: var(--border-color);">
+    <button onclick="showPage('landing'); window.scrollTo(0,0);" class="flex flex-col items-center gap-1.5 w-16 text-slate-500 hover:text-orange-500 transition-colors">
+        <i data-lucide="home" class="w-5 h-5"></i>
+        <span class="text-[9px] font-black uppercase tracking-widest">Home</span>
+    </button>
+    <button onclick="showPage('menu'); window.scrollTo(0,0);" class="flex flex-col items-center gap-1.5 w-16 text-slate-500 hover:text-orange-500 transition-colors">
+        <i data-lucide="utensils" class="w-5 h-5"></i>
+        <span class="text-[9px] font-black uppercase tracking-widest">Menu</span>
+    </button>
+    <button onclick="goToSection('memories')" class="flex flex-col items-center gap-1.5 w-16 text-slate-500 hover:text-orange-500 transition-colors">
+        <i data-lucide="book-open" class="w-5 h-5"></i>
+        <span class="text-[9px] font-black uppercase tracking-widest">Diary</span>
+    </button>
+    <button onclick="goToSection('location')" class="flex flex-col items-center gap-1.5 w-16 text-slate-500 hover:text-orange-500 transition-colors relative">
+        <i data-lucide="map-pin" class="w-5 h-5"></i>
+        <span class="text-[9px] font-black uppercase tracking-widest">Find Us</span>
+    </button>
+</div>
+
+<!-- CONTENT AREAS -->
+<main id="page-landing" class="page-transition pb-16 md:pb-0">
+    <!-- 1. HERO SECTION -->
+    <header class="relative min-h-[100dvh] flex items-center pt-16 overflow-hidden bg-slate-950 text-left">
+        <div class="absolute inset-0 z-0 opacity-80"><div class="absolute inset-0 bg-black/60 z-10 text-left"></div><video autoplay muted loop playsinline class="w-full h-full object-cover opacity-80"><source src="https://assets.mixkit.co/videos/preview/mixkit-chef-cooking-at-the-kitchen-of-a-restaurant-12792-large.mp4" type="video/mp4"></video></div>
+        <div class="max-w-7xl mx-auto px-6 w-full relative z-20 text-left">
+            <div class="lg:w-2/3 text-white text-left">
+                <h1 class="text-[3.5rem] sm:text-7xl md:text-[110px] font-black leading-[0.9] md:leading-[0.85] tracking-tighter mb-4 md:mb-8 uppercase reveal text-left">Hakka <br> <span class="text-orange-600 serif-italic text-left">Treasures.</span></h1>
+                <p class="text-lg sm:text-2xl md:text-3xl font-medium text-slate-300 max-w-xl mb-8 md:mb-12 reveal leading-tight italic text-left">Bold Street-Style Flavours Redefined with Professional Soul.</p>
+                <div class="flex gap-6 reveal text-left"><button onclick="showPage('menu')" class="bg-white text-slate-950 px-12 py-6 rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-orange-600 hover:text-white transition-all cursor-hover shadow-2xl">Discover The Menu</button></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- STATS SECTION (Mobile Auto-Cycle) -->
+    <section class="py-20 md:py-32 border-b" style="background-color: var(--bg-accent); border-color: var(--border-color);">
+        <div class="max-w-7xl mx-auto px-6">
+
+            <!-- Mobile Only: Fading Carousel -->
+            <div class="md:hidden relative h-16 flex items-center justify-center overflow-hidden" id="stats-mobile-container">
+                <div class="stat-slide absolute w-full text-center transition-opacity duration-700 opacity-100 z-10">
+                    <h3 class="text-sm font-black uppercase tracking-widest mb-1" style="color: var(--text-main);">Heritage Soul</h3>
+                    <p class="text-slate-500 text-[10px] uppercase font-bold tracking-widest leading-snug">Artisanal produce sourced daily for authentic street culture.</p>
+                </div>
+                <div class="stat-slide absolute w-full text-center transition-opacity duration-700 opacity-0 z-0">
+                    <h3 class="text-sm font-black uppercase tracking-widest mb-1" style="color: var(--text-main);">Master Culinary</h3>
+                    <p class="text-slate-500 text-[10px] uppercase font-bold tracking-widest leading-snug">Years of expert skill behind every single treasure discovered.</p>
+                </div>
+                <div class="stat-slide absolute w-full text-center transition-opacity duration-700 opacity-0 z-0">
+                    <h3 class="text-sm font-black uppercase tracking-widest mb-1" style="color: var(--text-main);">Urban Vibe</h3>
+                    <p class="text-slate-500 text-[10px] uppercase font-bold tracking-widest leading-snug">The heart of the street brought to life with hand-ground heat.</p>
+                </div>
+            </div>
+
+            <!-- Desktop Only: 3-Column Grid -->
+            <div class="hidden md:grid md:grid-cols-3 md:gap-12">
+                <div class="flex flex-col text-left reveal">
+                    <h3 class="text-sm font-black uppercase tracking-widest mb-2" style="color: var(--text-main);">Heritage Soul</h3>
+                    <p class="text-slate-500 text-[10px] uppercase font-bold tracking-widest leading-loose">Artisanal produce sourced daily for authentic street culture.</p>
+                </div>
+                <div class="flex flex-col text-left reveal stagger-1">
+                    <h3 class="text-sm font-black uppercase tracking-widest mb-2" style="color: var(--text-main);">Master Culinary</h3>
+                    <p class="text-slate-500 text-[10px] uppercase font-bold tracking-widest leading-loose">Years of expert skill behind every single treasure discovered.</p>
+                </div>
+                <div class="flex flex-col text-left reveal stagger-2">
+                    <h3 class="text-sm font-black uppercase tracking-widest mb-2" style="color: var(--text-main);">Urban Vibe</h3>
+                    <p class="text-slate-500 text-[10px] uppercase font-bold tracking-widest leading-loose">The heart of the street brought to life with hand-ground heat.</p>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- 2. THE VIBE SECTION (Split Layout) -->
+    <section id="vibe" class="py-20 md:py-32 border-b relative overflow-hidden" style="background-color: var(--bg-main); border-color: var(--border-color);">
+        <div class="max-w-7xl mx-auto px-6 grid lg:grid-cols-12 gap-16 items-center">
+            <!-- Left Text -->
+            <div class="lg:col-span-4 text-left reveal">
+                <span class="text-orange-500 font-black uppercase tracking-[0.5em] text-[10px] mb-4 block">Visual Experience</span>
+                <h2 class="text-5xl md:text-7xl font-black uppercase tracking-tighter leading-none mb-6" style="color: var(--text-main);">The <br class="hidden lg:block"/><span class="serif-italic text-orange-600">Vibe.</span></h2>
+                <p class="text-slate-500 text-sm leading-relaxed">Feel the heat of the wok and the energy of the street. Cinematic perspectives of Hakka Treasures.</p>
+            </div>
+
+            <!-- Right Videos (1 Top, 2 Bottom) -->
+            <div class="lg:col-span-8 flex flex-col gap-3 md:gap-6 reveal stagger-1 w-full">
+                <!-- Row 1: 1 Video -->
+                <div class="relative rounded-3xl md:rounded-[2.5rem] overflow-hidden group shadow-2xl border h-[240px] md:h-[320px] w-full cursor-hover" style="border-color: var(--border-color);">
+                    <video autoplay muted loop playsinline class="absolute inset-0 w-full h-full object-cover transition-all duration-700 grayscale group-hover:grayscale-0 group-hover:scale-105">
+                        <source src="https://assets.mixkit.co/videos/preview/mixkit-chef-cooking-at-the-kitchen-of-a-restaurant-12792-large.mp4" type="video/mp4">
+                    </video>
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity"></div>
+                    <div class="absolute bottom-4 left-4 md:bottom-6 md:left-6 text-left z-10">
+                        <div class="w-8 h-8 md:w-10 md:h-10 rounded-full backdrop-blur-md bg-white/10 flex items-center justify-center border border-white/20 mb-2 md:mb-3 transition-all group-hover:bg-orange-600 group-hover:border-orange-600"><i data-lucide="play" class="w-3 h-3 md:w-4 md:h-4 text-white fill-white"></i></div>
+                        <h3 class="text-lg md:text-xl text-white font-black uppercase tracking-tighter mb-1 leading-none">The Heat</h3>
+                    </div>
+                </div>
+
+                <!-- Row 2: 2 Videos -->
+                <div class="grid grid-cols-2 gap-3 md:gap-6 w-full">
+                    <!-- Video 2 -->
+                    <div class="relative rounded-3xl md:rounded-[2.5rem] overflow-hidden group shadow-2xl border h-[160px] md:h-[240px] cursor-hover" style="border-color: var(--border-color);">
+                        <video autoplay muted loop playsinline class="absolute inset-0 w-full h-full object-cover transition-all duration-700 grayscale group-hover:grayscale-0 group-hover:scale-105">
+                            <source src="https://assets.mixkit.co/videos/preview/mixkit-frying-meat-in-a-pan-42861-large.mp4" type="video/mp4">
+                        </video>
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity"></div>
+                        <div class="absolute bottom-4 left-4 md:bottom-6 md:left-6 text-left z-10">
+                            <h3 class="text-base md:text-xl text-white font-black uppercase tracking-tighter mb-1 leading-none">The Craft</h3>
+                        </div>
+                    </div>
+                    <!-- Video 3 -->
+                    <div class="relative rounded-3xl md:rounded-[2.5rem] overflow-hidden group shadow-2xl border h-[160px] md:h-[240px] cursor-hover" style="border-color: var(--border-color);">
+                        <video autoplay muted loop playsinline class="absolute inset-0 w-full h-full object-cover transition-all duration-700 grayscale group-hover:grayscale-0 group-hover:scale-105">
+                            <source src="https://assets.mixkit.co/videos/preview/mixkit-chef-stir-frying-vegetables-in-a-wok-42860-large.mp4" type="video/mp4">
+                        </video>
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity"></div>
+                        <div class="absolute bottom-4 left-4 md:bottom-6 md:left-6 text-left z-10">
+                            <h3 class="text-base md:text-xl text-white font-black uppercase tracking-tighter mb-1 leading-none">The Details</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. OUR HERITAGE THE HAKKA STORY SECTION -->
+    <section id="heritage" class="py-20 md:py-32 border-b relative" style="background-color: var(--bg-accent); border-color: var(--border-color);">
+        <div class="max-w-7xl mx-auto px-6 grid lg:grid-cols-12 gap-16 items-center">
+            <div class="lg:col-span-5 text-left reveal">
+                <span class="text-orange-500 font-black uppercase tracking-[0.5em] text-[10px] mb-6 block">Origins</span>
+                <h2 class="text-5xl md:text-7xl font-black uppercase tracking-tighter leading-none mb-8" style="color: var(--text-main);">The <br>Hakka <span class="serif-italic text-orange-600">Story.</span></h2>
+                <p class="text-slate-500 text-sm leading-relaxed mb-6">Born from the vibrant cross-cultural intersections of Kolkata and Old Delhi, our culinary roots dig deep into the history of Indo-Chinese fusion. Generations of wok masters perfected the balance of fiery Indian spices and subtle Chinese techniques.</p>
+                <p class="text-slate-500 text-sm leading-relaxed">Today, Hakka Treasures stands as a professional lab dedicated to preserving that exact heritage while elevating it to a modern standard of excellence.</p>
+            </div>
+            <div class="lg:col-span-7 grid grid-cols-2 gap-4 reveal stagger-1">
+                <img src="https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&q=80&w=800" class="w-full h-48 md:h-80 object-cover rounded-[2rem] shadow-xl">
+                <img src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=800" class="w-full h-48 md:h-80 object-cover rounded-[2rem] shadow-xl mt-8 md:mt-12">
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. SIGNATURE COLLECTION -->
+    <section id="favourites" class="py-20 md:py-32 border-b relative overflow-hidden" style="background-color: var(--bg-main); border-color: var(--border-color);">
+        <div class="max-w-7xl mx-auto px-6 mb-12 md:mb-20 flex flex-col md:flex-row items-start md:items-end justify-between gap-8 reveal text-left">
+            <div class="text-left max-w-full">
+                <span class="text-orange-500 font-black uppercase tracking-[0.5em] text-[10px] mb-4 block">Selected Classics</span>
+                <h2 class="text-4xl sm:text-5xl md:text-7xl font-black uppercase tracking-tighter leading-none serif-italic break-words" style="color: var(--text-main);">Signature <br class="hidden sm:block">Collection.</h2>
+            </div>
+            <div class="hidden md:flex gap-4 md:gap-6 text-left mt-4 md:mt-0">
+                <button onclick="manualScroll('favorites-scroll-container', 'left')" class="w-12 md:w-16 h-12 md:h-16 border rounded-full flex items-center justify-center hover:bg-orange-600 hover:text-white hover:border-orange-600 transition-all cursor-hover group" style="border-color: var(--border-color); color: var(--text-main);"><i data-lucide="chevron-left" class="w-5 h-5 md:w-6 md:h-6"></i></button>
+                <button onclick="manualScroll('favorites-scroll-container', 'right')" class="w-12 md:w-16 h-12 md:h-16 border rounded-full flex items-center justify-center hover:bg-orange-600 hover:text-white hover:border-orange-600 transition-all cursor-hover group" style="border-color: var(--border-color); color: var(--text-main);"><i data-lucide="chevron-right" class="w-5 h-5 md:w-6 md:h-6"></i></button>
+            </div>
+        </div>
+
+        <div class="max-w-7xl mx-auto px-6">
+            <div id="favorites-scroll-container" class="flex gap-6 md:gap-8 overflow-x-auto no-scrollbar snap-x snap-mandatory pb-8 md:pb-16 pr-6 md:pr-0 scroll-smooth"></div>
+        </div>
+    </section>
+
+    <!-- 5. MEMORIES AND BEST MOMENTS -->
+    <section id="memories" class="py-20 md:py-32 border-b overflow-hidden" style="background-color: var(--bg-accent); border-color: var(--border-color);">
+        <div class="max-w-7xl mx-auto px-6 mb-12 flex flex-col md:flex-row justify-between items-end gap-8 reveal">
+            <div class="text-left">
+                <span class="text-orange-500 font-black uppercase tracking-[0.5em] text-[10px] mb-4 block">Community Diary</span>
+                <h2 class="text-5xl md:text-6xl font-black uppercase tracking-tighter leading-none" style="color: var(--text-main);">Memories & <span class="serif-italic text-orange-600">Moments.</span></h2>
+            </div>
+            <div class="hidden md:flex gap-4">
+                <button onclick="manualScroll('community-scroll-container', 'left')" class="w-12 h-12 border rounded-full flex items-center justify-center hover:bg-orange-600 hover:text-white transition-all cursor-hover" style="border-color: var(--border-color); color: var(--text-main);"><i data-lucide="chevron-left" class="w-5 h-5"></i></button>
+                <button onclick="manualScroll('community-scroll-container', 'right')" class="w-12 h-12 border rounded-full flex items-center justify-center hover:bg-orange-600 hover:text-white transition-all cursor-hover" style="border-color: var(--border-color); color: var(--text-main);"><i data-lucide="chevron-right" class="w-5 h-5"></i></button>
+            </div>
+        </div>
+
+        <div class="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-8 reveal stagger-1">
+            <!-- TAG US PROMO BLOCK -->
+            <div class="lg:col-span-4 relative rounded-3xl md:rounded-[3rem] p-6 md:p-10 flex flex-col justify-center border shadow-xl text-left" style="background-color: var(--card-bg); border-color: var(--border-color);">
+                <div class="flex items-center gap-3 md:gap-4 mb-4 md:mb-6">
+                    <div class="w-10 h-10 md:w-12 md:h-12 bg-orange-600/10 rounded-full flex items-center justify-center text-orange-600"><i data-lucide="camera" class="w-4 h-4 md:w-5 md:h-5"></i></div>
+                    <h4 class="text-[10px] md:text-xs font-black uppercase tracking-widest text-slate-500">Tag Us</h4>
+                </div>
+                <h3 class="text-2xl md:text-4xl font-black tracking-tighter leading-none mb-3 md:mb-4" style="color: var(--text-main);">Share your <br class="hidden md:block"><span class="text-orange-600 serif-italic">Experience.</span></h3>
+                <p class="text-slate-500 text-[10px] md:text-xs leading-relaxed mb-6 md:mb-8 max-w-sm">Snap a photo of your order, tag us on Instagram, and get a secret code for your next Hakka craving.</p>
+                <button id="share-exp-btn" onclick="copyInstaHandle()" class="w-fit px-6 py-3 md:px-8 md:py-4 border rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest hover:bg-orange-600 hover:text-white transition-all hover:border-orange-600 flex items-center gap-2 cursor-hover" style="color: var(--text-main); border-color: var(--border-color);">@hakka_treasures <i data-lucide="copy" class="w-3 h-3 inline"></i></button>
+            </div>
+
+            <!-- CAROUSEL (MIXED FORMATS) -->
+            <div class="lg:col-span-8 flex overflow-x-auto gap-6 pb-8 snap-x no-scrollbar pr-6 md:pr-0 scroll-smooth" id="community-scroll-container">
+
+                <!-- Reel Style -->
+                <div class="snap-center shrink-0 w-[260px] h-[450px] relative rounded-[2.5rem] overflow-hidden group shadow-2xl border cursor-hover" style="border-color: var(--border-color);">
+                    <img src="https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&q=80&w=600" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+                    <div class="absolute bottom-0 left-0 p-6 w-full text-left">
+                        <div class="flex items-center gap-3 mb-3">
+                            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80" class="w-10 h-10 rounded-full border-2 border-orange-500 object-cover">
+                            <div><p class="text-white text-xs font-bold leading-none mb-1">David Chen</p><p class="text-orange-500 text-[9px] uppercase tracking-widest">@david_eats</p></div>
+                        </div>
+                        <p class="text-slate-300 text-sm italic line-clamp-3 leading-relaxed">"The wok hei here is absolutely unmatched. Reminds me of late nights in Kolkata!"</p>
+                    </div>
+                    <div class="absolute top-6 right-6 bg-white/10 backdrop-blur-md w-10 h-10 rounded-full flex items-center justify-center text-white"><i data-lucide="play" class="w-4 h-4 fill-white"></i></div>
+                </div>
+
+                <!-- Photo Style -->
+                <div class="snap-center shrink-0 w-[320px] h-[320px] my-auto relative rounded-[2.5rem] overflow-hidden group shadow-2xl border cursor-hover" style="border-color: var(--border-color);">
+                    <img src="https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&q=80&w=600" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                    <div class="absolute bottom-0 left-0 p-6 w-full text-left">
+                        <div class="flex items-center gap-3 mb-3">
+                            <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=100&q=80" class="w-10 h-10 rounded-full border-2 border-orange-500 object-cover">
+                            <div><p class="text-white text-xs font-bold leading-none mb-1">Sarah J.</p><p class="text-orange-500 text-[9px] uppercase tracking-widest">@sarah_foodie</p></div>
+                        </div>
+                        <p class="text-slate-300 text-sm italic line-clamp-2 leading-relaxed">"Finally found authentic Hakka noodles in the city. The heat levels are seriously perfect. 🔥"</p>
+                    </div>
+                    <div class="absolute top-6 right-6 bg-white/10 backdrop-blur-md w-10 h-10 rounded-full flex items-center justify-center text-white"><i data-lucide="image" class="w-4 h-4"></i></div>
+                </div>
+
+                <!-- Reel Style -->
+                <div class="snap-center shrink-0 w-[260px] h-[450px] relative rounded-[2.5rem] overflow-hidden group shadow-2xl border cursor-hover" style="border-color: var(--border-color);">
+                    <img src="https://images.unsplash.com/photo-1585032226651-759b368d7246?auto=format&fit=crop&q=80&w=600" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+                    <div class="absolute bottom-0 left-0 p-6 w-full text-left">
+                        <div class="flex items-center gap-3 mb-3">
+                            <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=100&q=80" class="w-10 h-10 rounded-full border-2 border-orange-500 object-cover">
+                            <div><p class="text-white text-xs font-bold leading-none mb-1">Michael T.</p><p class="text-orange-500 text-[9px] uppercase tracking-widest">@michael_travels</p></div>
+                        </div>
+                        <p class="text-slate-300 text-sm italic line-clamp-3 leading-relaxed">"Best date night spot. The interior vibe matches how good the signature bowls look."</p>
+                    </div>
+                    <div class="absolute top-6 right-6 bg-white/10 backdrop-blur-md w-10 h-10 rounded-full flex items-center justify-center text-white"><i data-lucide="play" class="w-4 h-4 fill-white"></i></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 6. GUEST PRAISE (REVIEWS) -->
+    <section id="reviews" class="py-20 md:py-32 border-b" style="background-color: var(--bg-main); border-color: var(--border-color);">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 md:mb-20 gap-8 reveal">
+                <div class="text-left">
+                    <span class="text-orange-500 font-black uppercase tracking-[0.5em] text-[10px] mb-4 block">Testimonials</span>
+                    <h2 class="text-5xl md:text-6xl font-black uppercase tracking-tighter leading-none" style="color: var(--text-main);">Guest <span class="serif-italic text-orange-600">Praise.</span></h2>
+                </div>
+                <button onclick="window.open('https://google.com', '_blank')" class="hidden md:block px-8 py-4 border rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-orange-600 hover:text-white transition-all hover:border-orange-600 cursor-hover" style="color: var(--text-main); border-color: var(--border-color);">Read all 500+ Reviews</button>
+            </div>
+            <!-- Auto-scrolling container for mobile -->
+            <div id="reviews-container" class="flex overflow-x-auto snap-x snap-mandatory gap-6 md:grid md:grid-cols-3 md:gap-8 text-left no-scrollbar pb-4 md:pb-0 scroll-smooth">
+                <div class="shrink-0 w-[85vw] md:w-auto snap-center p-8 border rounded-[2.5rem] reveal stagger-1 shadow-lg flex flex-col justify-between min-h-[250px]" style="background-color: var(--card-bg); border-color: var(--border-color);">
+                    <div>
+                        <div class="flex justify-between items-start mb-6">
+                            <div class="flex text-orange-600"><i data-lucide="star" class="w-4 h-4 fill-orange-600"></i><i data-lucide="star" class="w-4 h-4 fill-orange-600"></i><i data-lucide="star" class="w-4 h-4 fill-orange-600"></i><i data-lucide="star" class="w-4 h-4 fill-orange-600"></i><i data-lucide="star" class="w-4 h-4 fill-orange-600"></i></div>
+                            <div class="flex items-center gap-2 text-slate-500 bg-black/5 px-3 py-1 rounded-full border" style="border-color: var(--border-color);"><span class="text-[8px] font-black uppercase tracking-widest">Google Review</span></div>
+                        </div>
+                        <p class="text-sm leading-relaxed mb-8 italic" style="color: var(--text-main);">"The absolute best Indo-Chinese flavours I've found in Brampton. The wok heat is authentic, and the packaging for pickup kept everything piping hot."</p>
+                    </div>
+                    <h4 class="font-black text-xs uppercase tracking-widest text-slate-500">— Sarah Jenkins</h4>
+                </div>
+                <div class="shrink-0 w-[85vw] md:w-auto snap-center p-8 border rounded-[2.5rem] reveal stagger-2 shadow-lg flex flex-col justify-between min-h-[250px]" style="background-color: var(--card-bg); border-color: var(--border-color);">
+                    <div>
+                        <div class="flex justify-between items-start mb-6">
+                            <div class="flex text-orange-600"><i data-lucide="star" class="w-4 h-4 fill-orange-600"></i><i data-lucide="star" class="w-4 h-4 fill-orange-600"></i><i data-lucide="star" class="w-4 h-4 fill-orange-600"></i><i data-lucide="star" class="w-4 h-4 fill-orange-600"></i><i data-lucide="star" class="w-4 h-4 fill-orange-600"></i></div>
+                            <div class="flex items-center gap-2 text-slate-500 bg-black/5 px-3 py-1 rounded-full border" style="border-color: var(--border-color);"><span class="text-[8px] font-black uppercase tracking-widest">Yelp Elite</span></div>
+                        </div>
+                        <p class="text-sm leading-relaxed mb-8 italic" style="color: var(--text-main);">"Their Butter Chicken Deluxe is on another level. The digital ordering process was seamless, and the staff at the pickup desk were incredibly professional."</p>
+                    </div>
+                    <h4 class="font-black text-xs uppercase tracking-widest text-slate-500">— Michael T.</h4>
+                </div>
+                <div class="shrink-0 w-[85vw] md:w-auto snap-center p-8 border rounded-[2.5rem] reveal stagger-3 shadow-lg flex flex-col justify-between min-h-[250px]" style="background-color: var(--card-bg); border-color: var(--border-color);">
+                    <div>
+                        <div class="flex justify-between items-start mb-6">
+                            <div class="flex text-orange-600"><i data-lucide="star" class="w-4 h-4 fill-orange-600"></i><i data-lucide="star" class="w-4 h-4 fill-orange-600"></i><i data-lucide="star" class="w-4 h-4 fill-orange-600"></i><i data-lucide="star" class="w-4 h-4 fill-orange-600"></i><i data-lucide="star" class="w-4 h-4 fill-orange-600"></i></div>
+                            <div class="flex items-center gap-2 text-slate-500 bg-black/5 px-3 py-1 rounded-full border" style="border-color: var(--border-color);"><span class="text-[8px] font-black uppercase tracking-widest">TripAdvisor</span></div>
+                        </div>
+                        <p class="text-sm leading-relaxed mb-8 italic" style="color: var(--text-main);">"Finally, street food that doesn't compromise on quality or hygiene. Every dish feels like a meticulously crafted masterpiece. Will be back next week!"</p>
+                    </div>
+                    <h4 class="font-black text-xs uppercase tracking-widest text-slate-500">— Priya K.</h4>
+                </div>
+            </div>
+            <div class="flex justify-center mt-6 md:hidden">
+                <button onclick="window.open('https://google.com', '_blank')" class="text-[10px] font-black uppercase tracking-widest text-orange-600 border-b border-orange-600 pb-1">Read all 500+ Reviews</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- 7. JOIN THE INNER CIRCLE (TYPOGRAPHY/FORM VIP DESIGN) -->
+    <section id="inner-circle" class="py-20 md:py-32 border-b relative overflow-hidden" style="background-color: var(--bg-main); border-color: var(--border-color);">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="border rounded-[2.5rem] md:rounded-[3rem] overflow-hidden flex flex-col lg:flex-row shadow-2xl relative" style="background-color: var(--card-bg); border-color: var(--border-color);">
+
+                <!-- Left Side: VIP Card Typography -->
+                <div class="lg:w-5/12 p-8 md:p-12 lg:p-20 flex flex-col justify-between relative overflow-hidden border-b lg:border-b-0 lg:border-r" style="background-color: var(--bg-accent); border-color: var(--border-color);">
+                    <div class="absolute -top-32 -left-32 w-96 h-96 bg-orange-600/20 rounded-full blur-[100px] pointer-events-none"></div>
+
+                    <div class="relative z-10">
+                        <div class="w-12 h-12 md:w-16 md:h-16 bg-black/5 dark:bg-white/5 rounded-2xl flex items-center justify-center mb-6 md:mb-10 border" style="border-color: var(--border-color);">
+                            <i data-lucide="key" class="w-6 h-6 md:w-8 md:h-8 text-orange-600"></i>
+                        </div>
+                        <span class="text-orange-600 font-black uppercase tracking-[0.5em] text-[9px] md:text-[10px] mb-3 md:mb-4 block">VIP Access</span>
+                        <h2 class="text-4xl md:text-5xl lg:text-6xl font-black uppercase tracking-tighter leading-none mb-4 md:mb-6" style="color: var(--text-main);">Inner <br><span class="serif-italic text-orange-600">Circle.</span></h2>
+                        <p class="text-slate-500 text-xs md:text-sm leading-relaxed mb-2 md:mb-8 max-w-sm">Elevate your Hakka experience. Members receive priority updates, secret menu access, and a welcome gift.</p>
+                    </div>
+
+                    <div class="relative z-10 mt-8 lg:mt-0 hidden sm:block">
+                        <p class="text-[8px] md:text-[9px] font-black uppercase tracking-[0.3em] text-slate-400">Join 10,000+ Tastemakers</p>
+                    </div>
+
+                    <div class="absolute -bottom-10 -right-10 font-black text-9xl italic opacity-5 pointer-events-none select-none hidden lg:block" style="color: var(--text-main);">VIP</div>
+                </div>
+
+                <!-- Right Side: The Form -->
+                <div class="lg:w-7/12 p-6 md:p-8 lg:p-20 flex flex-col justify-center relative w-full">
+                    <div class="max-w-md w-full relative z-10 mx-auto">
+                        <div id="reward-form-container" class="space-y-4">
+                            <div class="mb-10 md:mb-12 text-left reveal stagger-1">
+                                <h3 class="text-2xl md:text-3xl font-black uppercase tracking-tighter mb-4 leading-tight" style="color: var(--text-main);">Claim Your <span class="text-orange-600 serif-italic text-3xl md:text-4xl">Reward.</span></h3>
+                                <p class="text-slate-500 text-[10px] md:text-xs font-medium uppercase tracking-[0.2em] leading-loose">Join our curated list for an immediate <span class="text-orange-600 font-black underline decoration-orange-600 decoration-2 underline-offset-4">15% OFF</span> discovery code.</p>
+                            </div>
+
+                            <div class="reveal stagger-1 group"><input type="text" id="vip-name" placeholder="GUEST NAME" class="ghost-input w-full"></div>
+                            <div class="reveal stagger-2 group"><input type="email" id="vip-email" placeholder="EMAIL ADDRESS" class="ghost-input w-full"></div>
+                            <div class="reveal stagger-3 group"><input type="tel" id="vip-phone" placeholder="MOBILE NUMBER" class="ghost-input w-full"></div>
+
+                            <div class="reveal stagger-4 flex items-start gap-4 py-6 md:py-8 text-left">
+                                <input type="checkbox" id="inner-consent" class="w-5 h-5 shrink-0 rounded border-slate-300 bg-transparent text-orange-600 accent-orange-600 cursor-hover mt-1">
+                                <label for="inner-consent" class="text-[9px] text-slate-500 uppercase font-black tracking-[0.2em] leading-relaxed cursor-hover">I consent to join the membership circle and receive VIP updates.</label>
+                            </div>
+
+                            <div id="reward-notif" class="text-red-500 text-[10px] font-bold uppercase tracking-widest hidden mb-4"></div>
+
+                            <button onclick="claimReward()" class="reveal stagger-4 w-full bg-orange-600 text-white font-black py-5 md:py-6 rounded-2xl md:rounded-full uppercase tracking-widest text-[10px] hover:bg-orange-700 transition-all shadow-xl active:scale-[0.98] cursor-hover flex items-center justify-center gap-2">
+                                Unlock Membership <i data-lucide="unlock" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+
+                        <!-- Reward Success Container -->
+                        <div id="reward-success-container" class="hidden space-y-8 text-center mt-4 md:mt-8">
+                            <div class="w-16 h-16 md:w-20 md:h-20 bg-green-500/10 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6 border border-green-500/20"><i data-lucide="check" class="w-8 h-8 md:w-10 md:h-10"></i></div>
+                            <h4 class="text-2xl md:text-4xl font-black uppercase tracking-tighter leading-none" style="color: var(--text-main);">Welcome to the <br><span class="text-orange-600 serif-italic">Inner Circle.</span></h4>
+                            <p class="text-slate-500 text-xs md:text-sm leading-relaxed mb-6">Here is your exclusive 15% OFF discovery code. We have also sent a copy to your provided contact details.</p>
+                            <div class="p-6 border-2 border-dashed border-orange-500 rounded-2xl bg-orange-500/10 text-center cursor-hover group max-w-sm mx-auto" onclick="copyPromoCode()">
+                                <span class="font-mono text-2xl md:text-4xl font-black text-orange-600 tracking-[0.3em] group-hover:scale-105 transition-transform block" id="promo-code-display">HAKKA15</span>
+                                <span class="text-[8px] uppercase tracking-widest text-orange-600/70 mt-3 block">Tap to Copy</span>
+                            </div>
+                            <button onclick="showPage('menu')" class="max-w-sm mx-auto w-full border border-orange-600 text-orange-600 font-black py-5 rounded-2xl md:rounded-full uppercase tracking-widest text-[10px] hover:bg-orange-600 hover:text-white transition-all shadow-xl mt-6 cursor-hover">Use Code Now</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 8. FIND US / LOCATION -->
+    <section id="location" class="py-20 md:py-32 border-b" style="background-color: var(--bg-accent); border-color: var(--border-color);">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-12 md:mb-20 reveal">
+                <span class="text-orange-500 font-black uppercase tracking-[0.5em] text-[10px] mb-4 block">Headquarters</span>
+                <h2 class="text-5xl md:text-6xl font-black uppercase tracking-tighter leading-none" style="color: var(--text-main);">Find <span class="serif-italic text-orange-600">Us.</span></h2>
+            </div>
+            <div class="grid lg:grid-cols-2 gap-12 items-center reveal stagger-1 text-left">
+                <div class="hidden lg:block h-[550px] w-full rounded-[3rem] overflow-hidden relative shadow-2xl border bg-black" style="border-color: var(--border-color);">
+                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2884.281858580226!2d-79.7618146!3d43.6838914!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x882b15c4d62334e3%3A0x6b4ebec6f07f4!2sBrampton%2C%20ON!5e0!3m2!1sen!2sca!4v1700000000000!5m2!1sen!2sca" width="100%" height="100%" style="border:0; filter: grayscale(100%) invert(92%) contrast(83%); opacity: 0.8;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                </div>
+
+                <div class="p-6 md:p-12 border rounded-3xl md:rounded-[3rem] space-y-6 md:space-y-10 shadow-lg lg:col-span-1 col-span-full" style="background-color: var(--card-bg); border-color: var(--border-color);">
+
+                    <!-- Mobile Map / Get Directions Button -->
+                    <div class="lg:hidden w-full mb-2 md:mb-4 relative overflow-hidden flex flex-col justify-center">
+                        <button onclick="window.open('https://maps.google.com/?q=123+Street+Ave,+Brampton,+ON', '_blank')" class="w-full bg-orange-600 text-white px-5 py-4 md:px-6 md:py-5 rounded-xl md:rounded-2xl font-black text-[9px] md:text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 md:gap-3 shadow-xl active:scale-95 transition-transform cursor-hover"><i data-lucide="map" class="w-4 h-4"></i> Get Directions to Restaurant</button>
+                    </div>
+
+                    <div class="flex items-start gap-3 md:gap-4">
+                        <i data-lucide="map-pin" class="text-orange-600 shrink-0 mt-0.5 md:mt-1 w-4 h-4 md:w-6 md:h-6"></i>
+                        <div>
+                            <h4 class="font-black uppercase tracking-widest text-[10px] md:text-xs mb-1 md:mb-2 text-slate-500">Full Address</h4>
+                            <p class="text-sm md:text-lg font-medium leading-relaxed" style="color: var(--text-main);">123 Street Ave,<br>Brampton, ON L6Y 1N7<br>Canada</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3 md:gap-4">
+                        <i data-lucide="clock" class="text-orange-600 shrink-0 mt-0.5 md:mt-1 w-4 h-4 md:w-6 md:h-6"></i>
+                        <div>
+                            <h4 class="font-black uppercase tracking-widest text-[10px] md:text-xs mb-1 md:mb-2 text-slate-500">Opening Hours</h4>
+                            <p class="text-sm md:text-lg font-medium leading-relaxed" style="color: var(--text-main);">Tuesday — Sunday<br>12:00 PM — 11:00 PM<br><span class="text-orange-600 text-xs md:text-sm italic font-bold">Closed Mondays</span></p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3 md:gap-4">
+                        <i data-lucide="car" class="text-orange-600 shrink-0 mt-0.5 md:mt-1 w-4 h-4 md:w-6 md:h-6"></i>
+                        <div>
+                            <h4 class="font-black uppercase tracking-widest text-[10px] md:text-xs mb-1 md:mb-2 text-slate-500">Parking Info</h4>
+                            <p class="text-xs md:text-base font-medium leading-relaxed" style="color: var(--text-main);">Complimentary street parking available directly in front. Dedicated underground lot accessible via rear entrance.</p>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 md:pt-6 border-t flex flex-col sm:flex-row gap-3 md:gap-4" style="border-color: var(--border-color);">
+                        <button onclick="window.location.href='mailto:reservations@hakkatreasures.com?subject=Table%20Reservation'" class="flex-1 border py-3 md:py-4 rounded-xl md:rounded-2xl flex items-center justify-center gap-2 text-[9px] md:text-[10px] font-black uppercase tracking-widest hover:bg-orange-600 hover:text-white hover:border-orange-600 transition-all shadow-md cursor-hover" style="color: var(--text-main); border-color: var(--border-color);"><i data-lucide="calendar" class="w-3 h-3 md:w-4 md:h-4"></i> Reserve Table</button>
+                        <button onclick="window.open('https://wa.me/15551234567', '_blank')" class="flex-1 py-3 md:py-4 rounded-xl md:rounded-2xl flex items-center justify-center gap-2 text-[9px] md:text-[10px] font-black uppercase tracking-widest text-white transition-all shadow-md hover:opacity-90 cursor-hover" style="background-color: #25D366;"><i data-lucide="message-circle" class="w-3 h-3 md:w-4 md:h-4 text-white"></i> WhatsApp Us</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 9. GENERAL INQUIRY (Editorial Minimalist Design + Call Option) -->
+    <section id="feedback" class="py-20 md:py-32 border-b" style="background-color: var(--bg-main); border-color: var(--border-color);">
+        <div class="max-w-7xl mx-auto px-6 grid lg:grid-cols-12 gap-12 md:gap-16 items-center">
+            <!-- Left Text / Call -->
+            <div class="lg:col-span-5 reveal text-left">
+                <span class="text-orange-500 font-black uppercase tracking-[0.5em] text-[10px] mb-4 block">Get in Touch</span>
+                <h2 class="text-5xl md:text-6xl lg:text-8xl font-black uppercase tracking-tighter leading-none mb-6" style="color: var(--text-main);">Drop a <br class="hidden lg:block"/><span class="serif-italic text-orange-600">Line.</span></h2>
+                <p class="text-slate-500 text-sm md:text-base leading-relaxed max-w-md font-medium mb-8 md:mb-10">Whether it's for private catering, event hosting, or immediate assistance, our desk is always open to you.</p>
+
+                <!-- Quick Call Option - Sleek Full Width on Mobile -->
+                <a href="tel:+15551234567" class="flex items-center justify-center sm:justify-start gap-4 p-5 md:p-6 rounded-2xl md:rounded-[2.5rem] border shadow-xl bg-orange-600/5 cursor-hover transition-all hover:-translate-y-1 hover:shadow-orange-600/10 w-full" style="border-color: var(--border-color);">
+                    <div class="w-12 h-12 bg-orange-600 text-white rounded-full flex items-center justify-center shrink-0 shadow-lg shadow-orange-600/30">
+                        <i data-lucide="phone-call" class="w-5 h-5"></i>
+                    </div>
+                    <div class="text-left">
+                        <h4 class="text-[9px] font-black uppercase tracking-[0.4em] text-slate-500 mb-1">Immediate Inquiry</h4>
+                        <span class="text-2xl md:text-3xl font-black tracking-tighter transition-colors" style="color: var(--text-main);">+1 (555) 123-4567</span>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Right Form -->
+            <div class="lg:col-span-7 reveal stagger-1 space-y-10 text-left bg-black/5 p-8 md:p-12 rounded-[2.5rem] md:rounded-[3rem] border shadow-lg relative" style="background-color: var(--glass-bg); border-color: var(--border-color);">
+                <div class="grid md:grid-cols-2 gap-8 md:gap-10">
+                    <div class="relative group">
+                        <label class="text-[9px] font-black uppercase tracking-[0.3em] text-slate-500 mb-2 block group-focus-within:text-orange-600 transition-colors">01. Who are you?</label>
+                        <input type="text" id="inq-name" placeholder="FULL NAME" class="w-full bg-transparent border-b-2 py-3 text-base font-bold uppercase tracking-wide outline-none focus:border-orange-600 transition-colors cursor-hover editorial-input" style="border-color: var(--border-color); color: var(--text-main);">
+                    </div>
+                    <div class="relative group">
+                        <label class="text-[9px] font-black uppercase tracking-[0.3em] text-slate-500 mb-2 block group-focus-within:text-orange-600 transition-colors">02. How to reach you?</label>
+                        <input type="email" id="inq-email" placeholder="EMAIL ADDRESS" class="w-full bg-transparent border-b-2 py-3 text-base font-bold uppercase tracking-wide outline-none focus:border-orange-600 transition-colors cursor-hover editorial-input" style="border-color: var(--border-color); color: var(--text-main);">
+                    </div>
+                </div>
+                <div class="relative group">
+                    <label class="text-[9px] font-black uppercase tracking-[0.3em] text-slate-500 mb-2 block group-focus-within:text-orange-600 transition-colors">03. What's on your mind?</label>
+                    <textarea id="inq-message" placeholder="CATERING, EVENTS, OR FEEDBACK..." class="w-full bg-transparent border-b-2 py-3 text-base font-bold uppercase tracking-wide outline-none focus:border-orange-600 transition-colors h-24 resize-none cursor-hover editorial-input" style="border-color: var(--border-color); color: var(--text-main);"></textarea>
+                </div>
+                <div class="pt-4 text-left flex flex-col md:flex-row md:items-center gap-6">
+                    <button onclick="sendInquiry()" class="w-full sm:w-auto px-12 py-5 bg-orange-600 text-white font-black rounded-full uppercase text-[10px] tracking-[0.3em] hover:bg-orange-700 transition-all shadow-xl hover:-translate-y-1 cursor-hover inline-flex items-center justify-center gap-3">
+                        Send Message <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </button>
+                    <div id="inq-notification" class="text-[10px] font-bold uppercase tracking-widest transition-opacity text-center md:text-left"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<!-- MENU PAGE -->
+<main id="page-menu" class="hidden min-h-[100dvh] pt-16 page-transition pb-24 md:pb-0">
+    <div id="menu-sticky-nav" class="sticky top-16 z-50 backdrop-blur-xl border-b shadow-sm transition-colors" style="background-color: var(--bg-main); border-color: var(--border-color);">
+        <div id="menu-sticky-inner" class="max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-6 flex flex-col md:flex-row items-stretch md:items-end gap-4 md:gap-10 text-left transition-all">
+
+            <!-- Unified Responsive Title -->
+            <div class="text-left shrink-0">
+                <h2 id="menu-main-title" class="text-5xl md:text-7xl font-black uppercase tracking-tighter leading-none text-orange-600 flex flex-row md:flex-col gap-2 md:gap-0">
+                    <span>The</span>
+                    <span>Menu.</span>
+                </h2>
+            </div>
+
+            <!-- Right: Banner & Categories -->
+            <div class="flex flex-col gap-3 w-full flex-grow overflow-hidden">
+                <!-- Promotional Banner -->
+                <div id="menu-promo-banner" class="w-full h-16 md:h-20 rounded-[1.25rem] overflow-hidden relative cursor-hover group shadow-md border" style="border-color: var(--border-color);" onclick="copyPromoCode()">
+                    <img src="https://images.unsplash.com/photo-1544025162-811114b0a0e4?auto=format&fit=crop&q=80&w=1200" alt="Festive Banner" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
+                    <div class="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-transparent flex items-center px-6">
+                        <div class="text-left">
+                            <span class="text-orange-500 font-black uppercase tracking-[0.3em] text-[8px] md:text-[9px] block mb-1">Festive Special</span>
+                            <span id="menu-banner-text" class="text-white font-black text-xs md:text-sm tracking-widest uppercase flex items-center gap-2">15% OFF <span class="opacity-50 font-medium">|</span> Code: HAKKA15</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Categories & Search & ✨ AI Concierge -->
+                <div class="flex flex-col sm:flex-row items-center gap-4 w-full">
+                    <div class="flex items-center gap-3 overflow-x-auto no-scrollbar max-w-full flex-grow text-left w-full pb-1 sm:pb-0" id="menu-sticky-categories"></div>
+                    <div class="flex items-center gap-2 w-full sm:w-auto shrink-0">
+                        <!-- ✨ GEMINI API FEATURE 2 TRIGGER -->
+                        <button onclick="openAIConcierge()" class="bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-full px-5 py-2.5 text-[9px] uppercase font-black tracking-widest shadow-lg flex items-center justify-center gap-2 cursor-hover group w-full sm:w-auto shrink-0 hover:shadow-orange-600/30 transition-all hover:scale-105">
+                            <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> AI Concierge
+                        </button>
+                        <div class="relative w-full sm:w-48 shrink-0">
+                            <input type="text" id="menu-search-full" oninput="renderMenuPage()" placeholder="Search..." class="w-full border rounded-full pl-9 pr-4 py-2.5 text-[9px] uppercase font-black tracking-widest focus:outline-none focus:border-orange-500 transition-all shadow-inner" style="background-color: var(--bg-accent); border-color: var(--border-color); color: var(--text-main);">
+                            <i data-lucide="search" class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-3 h-3"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-20 pb-40 text-left"><div class="space-y-24 md:space-y-48 text-left" id="continuous-menu-container"></div></div>
+</main>
+
+<!-- COMPACT MOBILE FOOTER -->
+<footer class="bg-slate-950 text-white pt-16 md:pt-24 pb-[6.5rem] md:pb-12 border-t border-white/5 relative overflow-hidden">
+    <div class="absolute bottom-0 right-0 text-[12vw] font-black text-white/[0.02] pointer-events-none uppercase italic leading-none select-none">Hakka</div>
+    <div class="max-w-7xl mx-auto px-6 relative text-left">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-12 mb-10 md:mb-16 text-white text-left">
+
+            <div class="col-span-2 md:col-span-1 flex flex-col justify-between items-start border-b border-white/10 pb-6 md:border-0 md:pb-0">
+                <div>
+                    <div class="flex items-center gap-2 mb-4 md:mb-6 cursor-hover" onclick="showPage('landing')">
+                        <div class="w-6 h-6 md:w-8 md:h-8 bg-orange-600 rounded-lg flex items-center justify-center shadow-lg shadow-orange-600/20"><i data-lucide="flame" class="w-3 h-3 md:w-4 md:h-4 text-white"></i></div>
+                        <span class="text-xl font-black uppercase tracking-tighter leading-none text-white">Hakka <br>Treasures</span>
+                    </div>
+                    <p class="text-slate-400 text-[10px] md:text-[11px] leading-relaxed max-w-[250px] md:max-w-xs mb-6">Professional street-style flavours redefined with heritage soul. Curated for the modern palate.</p>
+                </div>
+                <div class="flex gap-4 items-center justify-start w-full">
+                    <a href="https://instagram.com" target="_blank" class="w-8 h-8 md:w-10 md:h-10 rounded-full border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-orange-600 hover:border-orange-600 transition-all cursor-hover"><i data-lucide="instagram" class="w-3 h-3 md:w-4 md:h-4"></i></a>
+                    <a href="https://facebook.com" target="_blank" class="w-8 h-8 md:w-10 md:h-10 rounded-full border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-orange-600 hover:border-orange-600 transition-all cursor-hover"><i data-lucide="facebook" class="w-3 h-3 md:w-4 md:h-4"></i></a>
+                    <a href="https://twitter.com" target="_blank" class="w-8 h-8 md:w-10 md:h-10 rounded-full border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-orange-600 hover:border-orange-600 transition-all cursor-hover"><i data-lucide="twitter" class="w-3 h-3 md:w-4 md:h-4"></i></a>
+                </div>
+            </div>
+
+            <div class="col-span-1">
+                <h4 class="font-black uppercase tracking-[0.4em] text-[8px] md:text-[9px] text-orange-600 mb-4 md:mb-8">Discovery</h4>
+                <ul class="space-y-3 md:space-y-4 text-[9px] md:text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+                    <li><a href="#vibe" onclick="goToSection('vibe')" class="hover:text-orange-500 transition-colors cursor-hover">The Vibe</a></li>
+                    <li><a href="#heritage" onclick="goToSection('heritage')" class="hover:text-orange-500 transition-colors cursor-hover">Our Story</a></li>
+                    <li><a href="#" onclick="showPage('menu')" class="hover:text-orange-500 transition-colors cursor-hover">Full Menu</a></li>
+                    <li><a href="#reviews" onclick="goToSection('reviews')" class="hover:text-orange-500 transition-colors cursor-hover">Praise</a></li>
+                </ul>
+            </div>
+
+            <div class="col-span-1">
+                <h4 class="font-black uppercase tracking-[0.4em] text-[8px] md:text-[9px] text-orange-600 mb-4 md:mb-8">Contact</h4>
+                <p class="text-slate-300 text-[9px] md:text-[11px] leading-loose">123 Street Ave,<br>Brampton, ON L6Y 1N7</p>
+                <p class="text-slate-300 text-[9px] md:text-[11px] leading-loose mt-3 font-bold"><a href="tel:+15551234567" class="hover:text-orange-500 transition-colors">+1 (555) 123-4567</a></p>
+            </div>
+
+            <div class="col-span-2 md:col-span-1 pt-2 md:pt-0">
+                <h4 class="font-black uppercase tracking-[0.4em] text-[8px] md:text-[9px] text-orange-600 mb-4 md:mb-8">Kitchen Hours</h4>
+                <p class="text-slate-300 text-[9px] md:text-[11px] leading-loose">Tuesday — Sunday<br>12:00 PM — 11:00 PM</p>
+                <p class="text-orange-600 text-[9px] md:text-[10px] font-bold italic mt-3 md:mt-4">Closed Mondays for Prep.</p>
+            </div>
+        </div>
+
+        <div class="pt-6 md:pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-3 md:gap-4">
+            <p class="text-[7px] md:text-[8px] font-black uppercase tracking-[0.5em] text-slate-600 text-center md:text-left">© 2024 Hakka Treasures Kitchen Lab.</p>
+            <div class="flex gap-4 md:gap-6 text-[7px] md:text-[8px] font-black uppercase tracking-[0.4em] text-slate-600 justify-center">
+                <a href="#" class="hover:text-white transition-colors cursor-hover">Privacy Policy</a>
+                <a href="#" class="hover:text-white transition-colors cursor-hover">Terms & Conditions</a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script>
+    // ✨ Gemini API Integration Configuration
+    const apiKey = "";
+
+    let cursor; let lastOrderKitchenNote = "";
+    let currentDiscountRate = 0; // Tracks applied promo codes
+
+    const categories = ["North Indian", "Indo-Chinese", "Veg Specialties", "Non-Veg Delights", "Tandoori Grill", "Wok Specials", "Street Chaat", "Fresh Salads", "Chef Specials", "Signature Bowls", "Seafood Treasures", "Lamb Selection", "Artisanal Breads", "Rice Creations", "Dessert Garden", "Beverages"];
+    const menuItems = []; let idCounter = 1;
+    categories.forEach(cat => { for(let i = 1; i <= 8; i++) { const isOnSale = Math.random() > 0.7; const originalPrice = 14.95 + Math.floor(Math.random() * 10); const currentPrice = isOnSale ? originalPrice - 4.00 : originalPrice; menuItems.push({ id: idCounter++, name: `${cat} ${["Heritage", "Treasure", "Discovery", "Classic", "Deluxe", "Fusion", "Sizzle", "Elite"][i-1]}`, category: cat, originalPrice: isOnSale ? originalPrice : null, price: currentPrice, isVeg: Math.random() > 0.4, popular: i === 1, img: `https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=400`, desc: "Artisanal flavours crafted with heritage recipes and hand-ground spice blends for a refined experience." }); } });
+
+    let cart = []; let currentDrawerItem = null; let currentDrawerQty = 1;
+
+    // ✨ GEMINI API CORE LOGIC ✨
+    // Standardized fetch wrapper with exponential backoff for the Gemini API
+    async function callGemini(prompt, sysInstruction = "You are an elite, poetic culinary assistant and sommelier for 'Hakka Treasures', a premium Indo-Chinese restaurant. Your responses are very concise (1-2 sentences max), highly descriptive, and make the food sound absolutely irresistible. Do not use markdown.") {
+        if (!apiKey) return "The AI Oracle is asleep. (API key missing)";
+
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+        const payload = {
+            contents: [{ parts: [{ text: prompt }] }],
+            systemInstruction: { parts: [{ text: sysInstruction }] }
+        };
+
+        for (let attempt = 0; attempt < 5; attempt++) {
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const data = await response.json();
+                return data.candidates[0].content.parts[0].text;
+            } catch (error) {
+                if (attempt === 4) return "Our Master Chef is currently too busy cooking to answer. Please try again in a moment.";
+                await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 1000));
+            }
+        }
+    }
+
+    // ✨ FEATURE 1: AI Sommelier (Inside Item Drawer)
+    window.getAIPairing = async function() {
+        if (!currentDrawerItem) return;
+
+        const textEl = document.getElementById('ai-pairing-text');
+        const loaderEl = document.getElementById('ai-pairing-loader');
+
+        // Show loading
+        textEl.classList.add('hidden');
+        loaderEl.classList.remove('hidden');
+
+        const prompt = `A guest is looking at our dish: ${currentDrawerItem.name}. The description is: ${currentDrawerItem.desc}. Suggest one specific drink (cocktail or mocktail) or side dish that pairs perfectly with this flavor profile, and tell them why in 1 or 2 short sentences.`;
+
+        const recommendation = await callGemini(prompt);
+
+        // Hide loading, show result
+        loaderEl.classList.add('hidden');
+        textEl.innerText = `"${recommendation}"`;
+        textEl.classList.remove('hidden');
+    };
+
+    // ✨ FEATURE 3: Smart Dietary Translator
+    window.formatKitchenNote = async function() {
+        const noteEl = document.getElementById('item-kitchen-note');
+        const val = noteEl.value.trim();
+        if(!val) return;
+
+        const loader = document.getElementById('note-loader');
+        loader.classList.remove('hidden');
+
+        const prompt = `Rewrite this customer kitchen note into concise, professional culinary shorthand for expeditors (e.g., "ALLERGY ALERT: [x]", or "MODIFY: [y]"). Keep it extremely brief (under 15 words). Note: "${val}"`;
+        const sys = "You are an expert expediter in a high-end professional kitchen. You speak in concise, uppercase culinary shorthand. No markdown.";
+
+        const res = await callGemini(prompt, sys);
+        noteEl.value = res.replace(/["*]/g, '');
+        loader.classList.add('hidden');
+    };
+
+    // ✨ FEATURE 2: AI Taste Concierge (Menu Header)
+    window.openAIConcierge = function() {
+        const modal = document.getElementById('ai-concierge-overlay');
+        const inner = document.getElementById('ai-concierge-modal');
+
+        // Reset state
+        document.getElementById('ai-concierge-input').value = "";
+        document.getElementById('ai-concierge-result').classList.add('hidden');
+        document.getElementById('ai-concierge-loader').classList.add('hidden');
+        document.getElementById('ai-concierge-response').classList.add('hidden');
+
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+
+        // Small timeout for transition to apply
+        setTimeout(() => {
+            modal.classList.remove('opacity-0');
+            if (window.innerWidth >= 768) {
+                inner.classList.remove('scale-95');
+                inner.classList.add('scale-100');
+            } else {
+                inner.classList.add('is-open');
+            }
+        }, 10);
+    };
+
+    window.closeAIConcierge = function(e) {
+        // If event is passed, ensure it's on the overlay, not inner modal
+        if (e && e.target.id !== 'ai-concierge-overlay' && e.target.id !== 'close-concierge-btn') return;
+
+        const modal = document.getElementById('ai-concierge-overlay');
+        const inner = document.getElementById('ai-concierge-modal');
+
+        modal.classList.add('opacity-0');
+        if (window.innerWidth >= 768) {
+            inner.classList.remove('scale-100');
+            inner.classList.add('scale-95');
+        } else {
+            inner.classList.remove('is-open');
+        }
+
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }, 400); // Wait for transition
+    };
+
+    window.askAIConcierge = async function() {
+        const input = document.getElementById('ai-concierge-input').value.trim();
+        if (!input) return;
+
+        const resultBox = document.getElementById('ai-concierge-result');
+        const loader = document.getElementById('ai-concierge-loader');
+        const responseText = document.getElementById('ai-concierge-response');
+
+        // Show loading UI
+        resultBox.classList.remove('hidden');
+        loader.classList.remove('hidden');
+        responseText.classList.add('hidden');
+
+        // Build a small context map of the menu so Gemini knows what we actually serve
+        // We'll pick 1 random item from each category to save tokens but give it context
+        const sampledMenu = categories.map(cat => {
+            const item = menuItems.find(m => m.category === cat);
+            return item ? `${item.name} (${cat})` : '';
+        }).filter(Boolean).join(', ');
+
+        const prompt = `A guest at Hakka Treasures says: "${input}".
+        Here is a sample of what we serve: ${sampledMenu}.
+        Based on their craving, recommend exactly 1 or 2 specific dishes from our menu. Make the recommendation sound incredibly appetizing. Limit your response to 2 sentences.`;
+
+        const recommendation = await callGemini(prompt);
+
+        // Show result
+        loader.classList.add('hidden');
+        responseText.innerText = `Chef's Recommendation: ${recommendation}`;
+        responseText.classList.remove('hidden');
+    };
+
+    // --- GLOBAL UI FUNCTIONS ---
+    window.showPage = function(p) {
+        const landing = document.getElementById('page-landing');
+        const menu = document.getElementById('page-menu');
+        if(landing) landing.classList.toggle('hidden', p !== 'landing');
+        if(menu) menu.classList.toggle('hidden', p !== 'menu');
+        const nl = document.getElementById('nav-links'); if(nl) nl.classList.toggle('invisible', p === 'menu');
+        const nob = document.getElementById('nav-order-btn'); if(nob) nob.classList.toggle('hidden', p === 'menu');
+        if (p === 'menu') renderMenuPage();
+        window.scrollTo(0, 0); updateUI(); setupCursorHovers(); refreshReveal();
+    };
+
+    window.goToSection = function(id) {
+        showPage('landing');
+        setTimeout(() => {
+            const el = document.getElementById(id);
+            if (el) {
+                const yOffset = -80;
+                const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
+                window.scrollTo({top: y, behavior: 'smooth'});
+            }
+        }, 100);
+    };
+
+    window.toggleTheme = function() {
+        const isLight = document.body.classList.toggle('light-mode');
+        const icon = document.getElementById('theme-icon');
+        if(icon) { icon.setAttribute('data-lucide', isLight ? 'moon' : 'sun'); lucide.createIcons(); }
+        if (document.getElementById('page-menu') && !document.getElementById('page-menu').classList.contains('hidden')) renderMenuPage();
+    };
+
+    window.toggleCartDrawer = function() {
+        const dr = document.getElementById('cart-drawer');
+        const ov = document.getElementById('cart-drawer-overlay');
+        if(!dr || !ov) return;
+        const isOpen = dr.classList.contains('is-open');
+        if(isOpen) { dr.classList.remove('is-open'); ov.classList.add('hidden'); document.body.style.overflow = ''; }
+        else { dr.classList.add('is-open'); ov.classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
+    };
+
+    window.openItemDrawer = function(id) {
+        const i = menuItems.find(x => x.id === id); if (!i) return;
+        currentDrawerItem = i; currentDrawerQty = 1;
+        document.getElementById('drawer-item-name').innerText = i.name;
+        document.getElementById('drawer-item-price').innerText = `$${i.price.toFixed(2)}`;
+        document.getElementById('drawer-qty').innerText = 1;
+        document.getElementById('drawer-subtotal').innerText = `$${i.price.toFixed(2)}`;
+        document.getElementById('item-kitchen-note').value = "";
+
+        // ✨ Reset AI Pairing UI
+        document.getElementById('ai-pairing-text').classList.add('hidden');
+        document.getElementById('ai-pairing-loader').classList.add('hidden');
+        document.getElementById('ai-pairing-text').innerText = "";
+
+        document.getElementById('item-drawer-overlay').classList.remove('hidden');
+        document.getElementById('item-drawer').classList.add('is-open');
+        document.body.style.overflow = 'hidden';
+        lucide.createIcons(); setupCursorHovers();
+    };
+
+    window.closeItemDrawer = function() {
+        const ido = document.getElementById('item-drawer-overlay'); if(ido) ido.classList.add('hidden');
+        const idr = document.getElementById('item-drawer'); if(idr) idr.classList.remove('is-open');
+        document.body.style.overflow = ''; currentDrawerItem = null;
+    };
+
+    window.updateDrawerQty = function(d) {
+        currentDrawerQty = Math.max(1, currentDrawerQty + d);
+        document.getElementById('drawer-qty').innerText = currentDrawerQty;
+        document.getElementById('drawer-subtotal').innerText = `$${(currentDrawerItem.price * currentDrawerQty).toFixed(2)}`;
+    };
+
+    window.confirmDrawerItem = function() { const ex = cart.find(x => x.id === currentDrawerItem.id); if (ex) ex.quantity += currentDrawerQty; else cart.push({ id: currentDrawerItem.id, quantity: currentDrawerQty }); updateUI(); closeItemDrawer(); };
+    window.updateQuantity = function(id, d) { const i = cart.find(x => x.id === id); if (i) i.quantity += d; if (i && i.quantity <= 0) cart = cart.filter(x => x.id !== id); updateUI(); };
+
+    window.goToCheckout = function() {
+        if(cart.length === 0) {
+            const notif = document.getElementById('empty-bag-notif');
+            if(notif) {
+                notif.classList.remove('hidden');
+                setTimeout(() => notif.classList.add('hidden'), 3000);
+            }
+            return;
+        }
+
+        const bag = document.getElementById('bag-stage'); if(bag) bag.classList.add('hidden');
+        const chk = document.getElementById('checkout-stage'); if(chk) chk.classList.remove('hidden');
+        renderInvoice();
+    };
+
+    window.goToBag = function() {
+        const chk = document.getElementById('checkout-stage'); if(chk) chk.classList.add('hidden');
+        const bag = document.getElementById('bag-stage'); if(bag) bag.classList.remove('hidden');
+    };
+
+    window.getUserLocation = function() {
+        const addrInput = document.getElementById('chk-address');
+        if (!navigator.geolocation) { addrInput.value = "GPS not supported."; return; }
+        addrInput.value = "Acquiring precision coordinates...";
+        navigator.geolocation.getCurrentPosition(
+            (pos) => { addrInput.value = `GPS: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)} (Verified)`; },
+            () => { addrInput.value = "GPS Blocked. Enter address."; }
+        );
+    };
+
+    window.applyPromoCode = function() {
+        const input = document.getElementById('promo-input').value.trim().toUpperCase();
+        const msg = document.getElementById('promo-message');
+        msg.classList.remove('hidden');
+        if(input === 'HAKKA15') {
+            currentDiscountRate = 0.15;
+            msg.innerText = "15% Welcome Reward Applied!";
+            msg.className = "text-[10px] font-bold text-green-500 block uppercase tracking-widest mt-2";
+        } else {
+            currentDiscountRate = 0;
+            msg.innerText = "Invalid or Expired Code.";
+            msg.className = "text-[10px] font-bold text-red-500 block uppercase tracking-widest mt-2";
+        }
+        renderInvoice();
+    };
+
+    function renderInvoice() {
+        const list = document.getElementById('invoice-items');
+        if(!list) return;
+        const rawSubtotal = cart.reduce((s, x) => s + (menuItems.find(m => m.id === x.id).price * x.quantity), 0);
+        const discountAmt = rawSubtotal * currentDiscountRate;
+        const subtotal = rawSubtotal - discountAmt;
+        const tax = subtotal * 0.0825;
+        const total = subtotal + tax;
+
+        list.innerHTML = cart.map(ci => {
+            const m = menuItems.find(x => x.id === ci.id);
+            return `<div class="flex justify-between items-center text-xs text-left w-full gap-2" style="color: var(--text-main);"><span class="font-bold truncate flex-1">${ci.quantity}x ${m.name}</span><span class="font-mono shrink-0">$${(m.price * ci.quantity).toFixed(2)}</span></div>`;
+        }).join('');
+
+        const is = document.getElementById('inv-subtotal'); if(is) is.innerText = `$${rawSubtotal.toFixed(2)}`;
+
+        const idr = document.getElementById('inv-discount-row');
+        const idAmt = document.getElementById('inv-discount');
+        if(currentDiscountRate > 0) {
+            if(idr) idr.classList.remove('hidden');
+            if(idAmt) idAmt.innerText = `-$${discountAmt.toFixed(2)}`;
+        } else {
+            if(idr) idr.classList.add('hidden');
+        }
+
+        const it = document.getElementById('inv-tax'); if(it) it.innerText = `$${tax.toFixed(2)}`;
+        const itl = document.getElementById('inv-total'); if(itl) itl.innerText = `$${total.toFixed(2)}`;
+    }
+
+    window.confirmOrder = function() {
+        const n = document.getElementById('chk-name');
+        const e = document.getElementById('chk-email');
+        const p = document.getElementById('chk-phone');
+        const a = document.getElementById('chk-address');
+
+        let notif = document.getElementById('chk-notif');
+
+        if(!n || !e || !p || !a) return;
+
+        if(!n.value || !e.value || !p.value || !a.value) {
+            notif.innerText = 'Please complete all verification and address details to proceed.';
+            notif.classList.remove('hidden');
+            return;
+        }
+        notif.classList.add('hidden');
+
+        const noteEl = document.getElementById('item-kitchen-note');
+        if(noteEl) lastOrderKitchenNote = noteEl.value;
+        document.getElementById('checkout-stage').classList.add('hidden');
+        document.getElementById('tracking-stage').classList.remove('hidden');
+        document.getElementById('home-status-banner').classList.remove('hidden');
+        const readyList = document.getElementById('ready-items-list');
+
+        const rawSubtotal = cart.reduce((s, x) => s + (menuItems.find(m => m.id === x.id).price * x.quantity), 0);
+        const discountAmt = rawSubtotal * currentDiscountRate;
+        const finalSubtotal = rawSubtotal - discountAmt;
+        const tax = finalSubtotal * 0.0825;
+        const finalTotal = finalSubtotal + tax;
+
+        if(readyList) {
+            readyList.innerHTML = cart.map(ci => {
+                const m = menuItems.find(x => x.id === ci.id);
+                return `<div class="flex justify-between items-center text-[11px] opacity-60 text-left w-full gap-2" style="color: var(--text-main);"><span class="font-bold truncate flex-1">${ci.quantity}x ${m.name}</span><span class="shrink-0">$${(m.price * ci.quantity).toFixed(2)}</span></div>`;
+            }).join('');
+
+            if(currentDiscountRate > 0) {
+                readyList.innerHTML += `<div class="flex justify-between items-center text-[11px] text-green-500 font-bold text-left w-full gap-2 pt-2 border-t mt-2" style="border-color: var(--border-color);"><span class="truncate flex-1">Promo Applied (15%)</span><span class="shrink-0">-$${discountAmt.toFixed(2)}</span></div>`;
+            }
+        }
+        const rtv = document.getElementById('ready-total-val'); if(rtv) rtv.innerText = `$${finalTotal.toFixed(2)}`;
+        startLiveTracking();
+    };
+
+    function startLiveTracking() {
+        const progress = document.getElementById('status-progress');
+        const title = document.getElementById('status-title');
+        const desc = document.getElementById('status-desc');
+        const timeVal = document.getElementById('ready-time-val');
+        const homeText = document.getElementById('home-status-text');
+        if(progress) progress.style.width = '20%';
+        setTimeout(() => {
+            if(progress) progress.style.width = '100%';
+            if(title) title.innerText = "Ready For Collection.";
+            if(desc) desc.innerText = "Hurry, your food is getting cold!";
+            if(timeVal) timeVal.innerText = "COLLECT NOW";
+            if(homeText) homeText.innerText = "Hurry! Treasures ready for pickup!";
+            const pd = document.getElementById('preparing-dots'); if(pd) pd.classList.add('hidden');
+            const psb = document.getElementById('pickup-sim-btn'); if(psb) psb.classList.remove('hidden');
+            lucide.createIcons();
+        }, 6000);
+    }
+
+    window.orderPickedUp = function() {
+        document.getElementById('status-title').innerText = "Discovery Collected.";
+        document.getElementById('status-desc').innerText = "Enjoy your treasures.";
+        document.getElementById('pickup-sim-btn').classList.add('hidden');
+        document.getElementById('review-hub').classList.remove('hidden');
+        document.getElementById('home-status-banner').classList.add('hidden');
+        document.getElementById('ready-invoice-view').classList.add('hidden');
+        document.getElementById('tracking-ui-box').classList.add('hidden');
+        document.getElementById('discovery-hub-footer').classList.add('hidden');
+        const noteMention = document.getElementById('feedback-note-mention');
+        if(noteMention && lastOrderKitchenNote) { noteMention.innerText = `We ensured your request: "${lastOrderKitchenNote}" was handled precisely.`; }
+        lucide.createIcons();
+    };
+
+    window.submitFeedback = async function() {
+        const text = document.getElementById('feedback-text').value;
+        const notif = document.getElementById('feedback-notif');
+
+        if(!text) {
+            notif.innerText = "Please provide your remarks.";
+            notif.classList.remove('hidden');
+            return;
+        }
+        notif.classList.add('hidden');
+
+        // ✨ FEATURE 4: AI Chef's Sentiment Response
+        const btn = document.getElementById('submit-review-btn');
+        const origText = btn.innerHTML;
+        btn.innerHTML = 'Transmitting... <i data-lucide="sparkles" class="w-4 h-4 animate-pulse"></i>';
+        lucide.createIcons();
+
+        const prompt = `A guest just left this review: "${text}". Write a short (2 sentences max), personalized, empathetic response thanking them or politely addressing their concern.`;
+        const sys = "You are the Executive Chef of Hakka Treasures. You are gracious, professional, and deeply care about hospitality. Do not use markdown.";
+        const response = await callGemini(prompt, sys);
+
+        document.getElementById('review-hub').classList.add('hidden');
+        document.getElementById('thank-you-stage').classList.remove('hidden');
+        document.getElementById('status-title').classList.add('hidden');
+        document.getElementById('status-desc').classList.add('hidden');
+        document.getElementById('status-icon-box').classList.add('hidden');
+
+        document.getElementById('ai-chef-response').innerText = `"${response}"`;
+        document.getElementById('ai-chef-response-container').classList.remove('hidden');
+
+        btn.innerHTML = origText;
+        lucide.createIcons();
+    };
+
+    window.resetFlow = function() {
+        cart = [];
+        currentDiscountRate = 0;
+        updateUI();
+        const stages = ['bag-stage', 'checkout-stage', 'tracking-stage', 'review-hub', 'thank-you-stage'];
+        stages.forEach(s => { const el = document.getElementById(s); if(el) el.classList.toggle('hidden', s !== 'bag-stage'); });
+        const vis = ['status-title', 'status-desc', 'status-icon-box', 'ready-invoice-view', 'tracking-ui-box', 'discovery-hub-footer'];
+        vis.forEach(v => { const el = document.getElementById(v); if(el) el.classList.remove('hidden'); });
+        document.getElementById('home-status-banner').classList.add('hidden');
+
+        const promoInput = document.getElementById('promo-input'); if(promoInput) promoInput.value = "";
+        const promoMsg = document.getElementById('promo-message'); if(promoMsg) promoMsg.classList.add('hidden');
+
+        showPage('landing');
+    };
+
+    window.claimReward = function() {
+        const n = document.getElementById('vip-name').value;
+        const e = document.getElementById('vip-email').value;
+        const p = document.getElementById('vip-phone').value;
+        const consent = document.getElementById('inner-consent').checked;
+        const notif = document.getElementById('reward-notif');
+
+        if(!n || !e || !p || !consent) {
+            notif.innerText = "Please complete all fields and accept the terms.";
+            notif.classList.remove('hidden');
+            return;
+        }
+        notif.classList.add('hidden');
+
+        document.getElementById('reward-form-container').classList.add('hidden');
+        document.getElementById('reward-success-container').classList.remove('hidden');
+        lucide.createIcons();
+    };
+
+    window.sendInquiry = function() {
+        const n = document.getElementById('inq-name').value;
+        const e = document.getElementById('inq-email').value;
+        const m = document.getElementById('inq-message').value;
+        const notif = document.getElementById('inq-notification');
+
+        if(!n || !e || !m) {
+            notif.innerHTML = '<span class="text-red-500">Please complete all fields to proceed.</span>';
+            return;
+        }
+        notif.innerHTML = '<span class="text-green-500">Message successfully dispatched to our concierge.</span>';
+
+        document.getElementById('inq-name').value = '';
+        document.getElementById('inq-email').value = '';
+        document.getElementById('inq-message').value = '';
+
+        setTimeout(() => { notif.innerHTML = ''; }, 4000);
+    };
+
+    window.copyPromoCode = function() {
+        const handle = "HAKKA15";
+        const el = document.createElement('textarea');
+        el.value = handle;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+
+        const btn = document.getElementById('promo-code-display');
+        if(btn) {
+            const orig = btn.innerText;
+            btn.innerText = 'COPIED!';
+            setTimeout(() => { btn.innerText = orig; }, 2000);
+        }
+
+        const floatingText = document.getElementById('floating-banner-text');
+        if(floatingText) {
+            const origFloat = floatingText.innerText;
+            floatingText.innerText = 'COPIED!';
+            setTimeout(() => { floatingText.innerText = origFloat; }, 2000);
+        }
+
+        const menuBannerText = document.getElementById('menu-banner-text');
+        if(menuBannerText) {
+            const origMenu = menuBannerText.innerText;
+            menuBannerText.innerText = 'CODE COPIED!';
+            setTimeout(() => { menuBannerText.innerText = origMenu; }, 2000);
+        }
+    };
+
+    window.copyInstaHandle = function() {
+        const handle = "@hakka_treasures";
+        const el = document.createElement('textarea');
+        el.value = handle;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+
+        const btn = document.getElementById('share-exp-btn');
+        btn.innerHTML = 'COPIED! <i data-lucide="check" class="w-3 h-3 inline"></i>';
+        lucide.createIcons();
+        setTimeout(() => {
+            btn.innerHTML = '@hakka_treasures <i data-lucide="copy" class="w-3 h-3 inline"></i>';
+            lucide.createIcons();
+        }, 2000);
+    };
+
+    window.manualScroll = function(id, dir) { const c = document.getElementById(id); const amt = 320; if(c) c.scrollBy({ left: dir === 'left' ? -amt : amt, behavior: 'smooth' }); };
+
+    // --- Smart Scroll Handler ---
+    window.addEventListener('scroll', () => {
+        const nav = document.getElementById('menu-sticky-nav');
+        const menuPage = document.getElementById('page-menu');
+        if(nav && menuPage && !menuPage.classList.contains('hidden')) {
+            if(window.scrollY > 80) {
+                nav.classList.add('menu-scrolled');
+            } else {
+                nav.classList.remove('menu-scrolled');
+            }
+        }
+    });
+
+    // --- Mobile Auto-Scroll / Cycle Features ---
+    function initAutoFeatures() {
+        // Reviews Auto-Scroll
+        const rContainer = document.getElementById('reviews-container');
+        if (rContainer) {
+            let rScrollAmount = 0;
+            setInterval(() => {
+                if (window.innerWidth < 768 && !document.getElementById('page-landing').classList.contains('hidden')) {
+                    const cardWidth = rContainer.clientWidth;
+                    rScrollAmount += cardWidth;
+                    if (rScrollAmount >= rContainer.scrollWidth - cardWidth / 2) rScrollAmount = 0;
+                    rContainer.scrollTo({ left: rScrollAmount, behavior: 'smooth' });
+                }
+            }, 3000);
+        }
+
+        // Stats Auto-Cycle (Fading)
+        const statsSlides = document.querySelectorAll('.stat-slide');
+        if (statsSlides.length) {
+            let currentStat = 0;
+            setInterval(() => {
+                if (window.innerWidth < 768 && !document.getElementById('page-landing').classList.contains('hidden')) {
+                    statsSlides.forEach((slide, index) => {
+                        if (index === currentStat) {
+                            slide.classList.remove('opacity-100', 'z-10');
+                            slide.classList.add('opacity-0', 'z-0');
+                        }
+                    });
+                    currentStat = (currentStat + 1) % statsSlides.length;
+                    statsSlides[currentStat].classList.remove('opacity-0', 'z-0');
+                    statsSlides[currentStat].classList.add('opacity-100', 'z-10');
+                }
+            }, 3500);
+        }
+
+        // Signature Collection Auto-Scroll
+        const sigContainer = document.getElementById('favorites-scroll-container');
+        if (sigContainer) {
+            let sigScrollAmount = 0;
+            setInterval(() => {
+                if (window.innerWidth < 768 && !document.getElementById('page-landing').classList.contains('hidden')) {
+                    // Card width (85vw) + gap (1.5rem = 24px)
+                    const cardWidth = (window.innerWidth * 0.85) + 24;
+                    sigScrollAmount += cardWidth;
+                    // Reset if we reach the end
+                    if (sigScrollAmount >= sigContainer.scrollWidth - window.innerWidth) {
+                        sigScrollAmount = 0;
+                    }
+                    sigContainer.scrollTo({ left: sigScrollAmount, behavior: 'smooth' });
+                }
+            }, 4000);
+        }
+    }
+
+    function renderMenuPage() {
+        const catNav = document.getElementById('menu-sticky-categories');
+        const menuCont = document.getElementById('continuous-menu-container');
+        if(!catNav || !menuCont) return;
+        const searchVal = document.getElementById('menu-search-full').value.toLowerCase();
+        catNav.innerHTML = categories.map(cat => `<button data-cat-id="${cat}" onclick="scrollToCategory('${cat}')" class="category-btn whitespace-nowrap px-6 py-2 rounded-full text-[9px] font-black uppercase tracking-[0.2em] transition-all cursor-hover text-left">${cat}</button>`).join('');
+        menuCont.innerHTML = categories.map(cat => {
+            const items = menuItems.filter(i => (i.category === cat) && (i.name.toLowerCase().includes(searchVal) || i.desc.toLowerCase().includes(searchVal)));
+            if (items.length === 0) return '';
+            return `<div id="section-${cat}" class="menu-section reveal"><div class="flex items-center gap-6 mb-10 text-left"><h3 class="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none" style="color: var(--text-main);">${cat}</h3><div class="h-[1px] flex-grow opacity-20" style="background-color: var(--text-main);"></div></div>
+                    <div class="grid grid-rows-3 grid-flow-col gap-4 md:gap-6 overflow-x-auto snap-x snap-mandatory no-scrollbar pb-8 auto-cols-[85vw] md:auto-cols-[calc(50%-12px)]">
+                        ${items.map(item => {
+                            const discountPerc = item.originalPrice ? Math.round(((item.originalPrice - item.price) / item.originalPrice) * 100) : 0;
+                            return `<div class="menu-row snap-center flex flex-col justify-center gap-4 p-5 md:p-8 rounded-[2.5rem] cursor-hover group transition-all h-full w-full" onclick="openItemDrawer(${item.id})">
+                                <div class="flex items-center gap-4 w-full">
+                                    <div class="relative shrink-0 text-left"><img src="${item.img}" class="menu-item-img w-20 h-20 md:w-28 md:h-28 rounded-[2rem] object-cover transition-all duration-700 shadow-md border border-black/5"><div class="absolute -top-1 -left-1 bg-white p-1 rounded-lg shadow-md border border-black/5"><div class="${item.isVeg ? 'veg-tag' : 'nonveg-tag'} p-[0.5px]"><div class="${item.isVeg ? 'veg-dot' : 'nonveg-dot'} w-1 h-1 rounded-full text-left"></div></div></div></div>
+                                    <div class="flex-grow min-w-0">
+                                        <div class="flex justify-between items-start mb-2 gap-3">
+                                            <div class="flex flex-col text-left min-w-0 flex-1">
+                                                <h4 class="text-base md:text-xl font-black uppercase tracking-tighter truncate leading-tight text-left" style="color: var(--text-main);">${item.name}</h4>
+                                                ${item.popular ? `<span class="text-[8px] font-black uppercase text-orange-600 tracking-widest mt-1 truncate">Hakka Signature</span>`:''}
+                                            </div>
+                                            <div class="flex items-center gap-3 sm:gap-5 text-left shrink-0">
+                                                <div class="flex flex-col items-end text-left">
+                                                    ${item.originalPrice ? `<span class="text-[10px] line-through opacity-40 font-bold">$${item.originalPrice.toFixed(2)}</span>` : ''}
+                                                    <div class="flex items-center gap-1 sm:gap-2">
+                                                        ${item.originalPrice ? `<span class="bg-red-500/10 text-red-500 border border-red-500/20 px-2 py-0.5 rounded text-[8px] font-black tracking-widest hidden sm:inline-block">-${discountPerc}% OFF</span>` : ''}
+                                                        <span class="font-black text-lg md:text-3xl" style="color: var(--text-main);">$${item.price.toFixed(2)}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="add-btn-circle w-8 h-8 md:w-12 md:h-12 rounded-full border border-orange-600/30 flex items-center justify-center transition-all group-hover:shadow-lg group-hover:shadow-orange-600/20 shrink-0" style="color: var(--text-main);"><i data-lucide="plus" class="w-4 h-4 text-left"></i></div>
+                                            </div>
+                                        </div>
+                                        <p class="text-slate-500 text-[10px] leading-relaxed line-clamp-2 italic font-medium opacity-60 group-hover:opacity-100 transition-colors text-left" style="color: var(--text-main);">${item.desc}</p>
+                                    </div>
+                                </div>
+                            </div>`}).join('')}
+                    </div></div>`;
+        }).join('');
+        initScrollSpy(); lucide.createIcons(); setupCursorHovers(); refreshReveal();
+    }
+
+    window.scrollToCategory = function(cat) { const el = document.getElementById(`section-${cat}`); if (el) window.scrollTo({ top: el.offsetTop - 180, behavior: 'smooth' }); };
+    function initScrollSpy() { const obs = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) updateActiveCategoryTab(e.target.id.replace('section-', '')); }), { threshold: 0.1, rootMargin: "-180px 0px -50% 0px" }); document.querySelectorAll('.menu-section').forEach(s => obs.observe(s)); }
+    function updateActiveCategoryTab(id) { const container = document.getElementById('menu-sticky-categories'); if(!container) return; document.querySelectorAll('.category-btn').forEach(btn => { if(btn.dataset.catId === id) { btn.classList.add('active'); container.scrollTo({ left: btn.offsetLeft - (container.clientWidth / 2) + (btn.clientWidth / 2), behavior: 'smooth' }); } else { btn.classList.remove('active'); } }); }
+
+    function updateUI() {
+        const totalItems = cart.reduce((s, x) => s + x.quantity, 0);
+        const rawTotal = cart.reduce((s, x) => s + (menuItems.find(m => m.id === x.id).price * x.quantity), 0);
+        const finalTotal = rawTotal - (rawTotal * currentDiscountRate);
+
+        const trackingStage = document.getElementById('tracking-stage');
+        const orderActive = trackingStage && !trackingStage.classList.contains('hidden');
+
+        // Top Nav Badge
+        const nb = document.getElementById('cart-badge-nav'); if (nb) { nb.innerText = totalItems; nb.classList.toggle('opacity-0', totalItems === 0); }
+
+        // Floating Pill (Desktop & Mobile)
+        const hub = document.getElementById('floating-cart-hub');
+        if (hub) {
+            if (totalItems === 0 || orderActive) {
+                hub.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+                hub.classList.remove('translate-y-0', 'opacity-100', 'pointer-events-auto');
+            } else {
+                hub.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+                hub.classList.add('translate-y-0', 'opacity-100', 'pointer-events-auto');
+            }
+        }
+
+        // Empty Bag Validation State
+        const checkoutBtn = document.getElementById('checkout-btn');
+        if (checkoutBtn) {
+            if (totalItems === 0) {
+                checkoutBtn.classList.add('opacity-50', 'pointer-events-none');
+            } else {
+                checkoutBtn.classList.remove('opacity-50', 'pointer-events-none');
+            }
+        }
+
+        const hcc = document.getElementById('hub-cart-count'); if (hcc) hcc.innerText = totalItems;
+        const hct = document.getElementById('hub-cart-total'); if (hct) hct.innerText = `$${finalTotal.toFixed(2)}`;
+        const bt = document.getElementById('bag-total'); if (bt) bt.innerText = `$${finalTotal.toFixed(2)}`;
+        renderCartLists();
+    }
+
+    function renderCartLists() {
+        const html = cart.length === 0 ? `<div class="text-center py-20 opacity-20 italic text-sm text-slate-800" style="color: var(--text-main);">Bag is empty.</div>` : cart.map(ci => {
+            const m = menuItems.find(x => x.id === ci.id);
+            return `<div class="flex items-center justify-between gap-3 p-4 md:p-5 bg-white rounded-3xl border border-slate-100 shadow-sm transition-all hover:scale-[1.02] text-slate-900 w-full overflow-hidden">
+                <div class="flex-grow min-w-0 text-left flex-1">
+                    <h4 class="text-[10px] font-black uppercase text-slate-800 mb-1 leading-tight truncate text-left text-slate-900">${m.name}</h4>
+                    <p class="text-[10px] font-bold text-orange-600 text-left">$${(m.price * ci.quantity).toFixed(2)}</p>
+                </div>
+                <div class="flex items-center gap-2 md:gap-3 bg-slate-50 p-1 rounded-xl shadow-inner border border-slate-100 text-slate-900 shrink-0">
+                    <button onclick="updateQuantity(${m.id},-1)" class="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center hover:bg-orange-600 rounded-lg group transition-all active:scale-90"><i data-lucide="minus" class="w-3.5 h-3.5 text-slate-400 group-hover:text-white transition-colors text-slate-400"></i></button>
+                    <span class="w-4 text-center text-xs font-black text-slate-900">${ci.quantity}</span>
+                    <button onclick="updateQuantity(${m.id},1)" class="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center hover:bg-orange-600 rounded-lg group transition-all active:scale-90"><i data-lucide="plus" class="w-3.5 h-3.5 text-slate-400 group-hover:text-white transition-colors text-white"></i></button>
+                </div>
+            </div>`;
+        }).join('');
+        const bil = document.getElementById('bag-items-list'); if (bil) bil.innerHTML = html;
+        lucide.createIcons(); setupCursorHovers();
+    }
+
+    const revealObserver = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) e.target.classList.add('active'); }), { threshold: 0.1 });
+    function refreshReveal() { document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el)); }
+    function setupCursorHovers() { if (!cursor) return; document.querySelectorAll('.cursor-hover, button, a, label, input, textarea').forEach(el => { el.onmouseenter = () => { cursor.style.transform = 'translate(-50%, -50%) scale(2.5)'; cursor.style.background = 'rgba(234, 88, 12, 0.1)'; }; el.onmouseleave = () => { cursor.style.transform = 'translate(-50%, -50%) scale(1)'; cursor.style.background = 'rgba(234, 88, 12, 0.4)'; }; }); }
+    document.addEventListener('mousemove', e => { if (cursor) { cursor.style.left = e.clientX + 'px'; cursor.style.top = e.clientY + 'px'; cursor.style.display = 'block'; } });
+
+    function renderFavorites() {
+        const container = document.getElementById('favorites-scroll-container');
+        if (!container) return;
+        const popular = menuItems.filter(i => i.popular).slice(0, 8);
+
+        container.innerHTML = popular.map((item, index) => {
+            return `
+            <div class="bento-card group rounded-[2.5rem] overflow-hidden relative snap-start cursor-hover text-left shrink-0 w-[85vw] sm:w-[320px] lg:w-[calc((100%-4rem)/3)] shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border flex flex-col" style="background-color: var(--card-bg); border-color: var(--border-color);" onclick="openItemDrawer(${item.id})">
+
+                <!-- ANIMATED LINE -->
+                <div class="absolute bottom-0 left-0 h-1.5 bg-orange-600 w-0 group-hover:w-full transition-all duration-[600ms] ease-out z-[100]"></div>
+
+                <div class="absolute -top-6 -right-6 font-black text-9xl italic opacity-5 pointer-events-none z-0 transition-transform duration-700 group-hover:scale-110" style="color: var(--text-main);">0${index + 1}</div>
+
+                <div class="relative h-56 md:h-64 overflow-hidden border-b shrink-0 z-10" style="border-color: var(--border-color);">
+                    <img src="${item.img}" class="absolute inset-0 w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-105">
+
+                    <div class="absolute top-5 left-5 bg-white/90 dark:bg-black/50 backdrop-blur-md p-1.5 rounded-lg shadow-md border border-black/10 z-20">
+                        <div class="${item.isVeg ? 'border-green-600' : 'border-red-600'} border p-[1px] bg-white rounded-sm">
+                            <div class="${item.isVeg ? 'bg-green-600' : 'bg-red-600'} w-1.5 h-1.5 rounded-full"></div>
+                        </div>
+                    </div>
+                    <div class="absolute top-5 right-5 bg-orange-600 text-white text-[8px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full z-20 shadow-lg">
+                        ${item.category}
+                    </div>
+                </div>
+
+                <div class="p-6 md:p-8 flex flex-col flex-grow relative z-10 text-left bg-transparent">
+                    <div class="flex justify-between items-start mb-3 gap-4">
+                        <h3 class="text-xl md:text-2xl font-black uppercase tracking-tighter leading-tight" style="color: var(--text-main);">${item.name}</h3>
+                        <span class="text-orange-600 font-black text-xl md:text-2xl tracking-tighter shrink-0">$${item.price.toFixed(2)}</span>
+                    </div>
+
+                    <p class="text-slate-500 text-[11px] md:text-xs leading-relaxed italic font-medium line-clamp-2 mb-6 flex-grow">"${item.desc}"</p>
+
+                    <div class="flex items-center justify-between mt-auto pt-6 border-t" style="border-color: var(--border-color);">
+                        <span class="text-[9px] font-black uppercase tracking-widest text-slate-400 group-hover:text-orange-600 transition-colors">Hakka Signature</span>
+                        <div class="w-10 h-10 md:w-12 md:h-12 rounded-full border flex items-center justify-center transition-all duration-300 group-hover:bg-orange-600 group-hover:border-orange-600 group-hover:shadow-lg shadow-orange-600/30 group-hover:text-white" style="border-color: var(--border-color); color: var(--text-main);">
+                            <i data-lucide="plus" class="w-4 h-4 md:w-5 md:h-5 transition-transform duration-500 group-hover:rotate-90"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
+        lucide.createIcons(); setupCursorHovers(); refreshReveal();
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        cursor = document.getElementById('custom-cursor');
+        renderFavorites();
+        showPage('landing');
+        updateUI();
+        initAutoFeatures();
+    });
+</script>
+</body>
+</html>
