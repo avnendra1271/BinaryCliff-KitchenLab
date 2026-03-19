@@ -11,7 +11,7 @@ import java.util.UUID;
 
 /**
  * Service interface for Authentication operations.
- * Designed for easy extraction into microservice.
+ * Provides core authentication and admin management functionality.
  */
 public interface AuthService {
     
@@ -35,6 +35,8 @@ public interface AuthService {
     // Password management
     void changePassword(UUID adminId, String currentPassword, String newPassword);
     void resetPassword(String email);
+    void confirmPasswordReset(String token, String newPassword);
+    boolean validatePasswordResetToken(String token);
     boolean validatePassword(String rawPassword, String encodedPassword);
     
     // Profile management
@@ -52,8 +54,6 @@ public interface AuthService {
     boolean isUsernameAvailable(String username);
     boolean isEmailAvailable(String email, UUID excludeId);
     
-    // Security operations
-    boolean hasPermission(UUID adminId, String permission);
-    boolean hasRole(UUID adminId, Admin.AdminRole role);
+    // Role-based queries
     List<Admin> getAdminsByRole(Admin.AdminRole role);
 }

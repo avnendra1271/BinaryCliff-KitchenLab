@@ -24,6 +24,13 @@ public class EmailService {
     private String baseUrl;
     
     /**
+     * Check if email service is enabled.
+     */
+    public boolean isEmailEnabled() {
+        return emailEnabled;
+    }
+    
+    /**
      * Send password reset email.
      */
     public void sendPasswordResetEmail(String toEmail, String resetToken) {

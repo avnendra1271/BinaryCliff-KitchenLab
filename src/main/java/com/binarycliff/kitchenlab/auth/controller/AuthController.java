@@ -95,8 +95,59 @@ public class AuthController {
      * Reset password for given email.
      */
     @PostMapping("/reset-password")
-    public ResponseEntity<Void> resetPassword(@RequestBody String email) {
+    public ResponseEntity<Map<String, String>> resetPassword(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        if (email == null || email.trim().isEmpty()) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Email is required");
+            return ResponseEntity.badRequest().body(error);
+        }
+        
         authService.resetPassword(email);
-        return ResponseEntity.ok().build();
+        
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Password reset link has been sent to your email");
+        return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * Confirm password reset with token.
+     */
+    @PostMapping("/confirm-reset-password")
+    public ResponseEntity<Map<String, String>> confirmPasswordReset(@RequestBody Map<String, String> request) {
+        String token = request.get("token");
+        String newPassword = request.get("newPassword");
+        
+        if (token == null || token.trim().isEmpty()) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Reset token is required");
+            return ResponseEntity.badRequest().body(error);
+        }
+        
+        if (newPassword == null || newPassword.trim().isEmpty()) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "New password is required");
+            return ResponseEntity.badRequest().body(error);
+        }
+        
+        authService.confirmPasswordReset(token, newPassword);
+        
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Password has been reset successfully");
+        return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * Validate password reset token.
+     */
+    @GetMapping("/validate-reset-token")
+    public ResponseEntity<Map<String, Object>> validateResetToken(@RequestParam String token) {
+        boolean isValid = authService.validatePasswordResetToken(token);
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("valid", isValid);
+        response.put("message", isValid ? "Token is valid" : "Token is invalid or expired");
+        
+        return ResponseEntity.ok(response);
     }
 }

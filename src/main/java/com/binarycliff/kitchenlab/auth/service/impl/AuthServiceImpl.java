@@ -10,9 +10,9 @@ import com.binarycliff.kitchenlab.auth.repository.EmailVerificationTokenReposito
 import com.binarycliff.kitchenlab.auth.repository.PasswordResetTokenRepository;
 import com.binarycliff.kitchenlab.auth.repository.UserSessionRepository;
 import com.binarycliff.kitchenlab.auth.service.*;
+import com.binarycliff.kitchenlab.auth.exception.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,7 +26,7 @@ import java.util.UUID;
 
 /**
  * Implementation of AuthService interface.
- * Provides authentication and admin management functionality.
+ * Provides authentication and admin management functionality with proper exception handling.
  */
 @Slf4j
 @Service
@@ -48,86 +48,53 @@ public class AuthServiceImpl implements AuthService {
     public LoginResponse login(LoginRequest request) {
         log.info("Attempting login for user: {}", request.getUsername());
         
-        // Check rate limiting
+        // Validate request
+        if (!validateLoginRequest(request)) {
+            throw new ValidationException("Invalid login request");
+        }
+        
         String identifier = request.getUsername().toLowerCase();
+        
+        // Check rate limiting
         if (rateLimitingService.isLockedOut(identifier)) {
             long remainingMinutes = rateLimitingService.getRemainingLockoutMinutes(identifier);
-            throw new BadCredentialsException("Account locked. Try again in " + remainingMinutes + " minutes.");
+            throw new AccountLockedException(remainingMinutes);
         }
         
-        Optional<Admin> adminOpt = adminRepository.findByUsername(request.getUsername());
-        if (adminOpt.isEmpty()) {
-            rateLimitingService.recordFailedAttempt(identifier);
-            throw new BadCredentialsException("Invalid username or password");
-        }
-
-        Admin admin = adminOpt.get();
+        // Find user
+        Admin admin = adminRepository.findByUsername(request.getUsername())
+                .orElseThrow(() -> {
+                    rateLimitingService.recordFailedAttempt(identifier);
+                    return new UserNotFoundException("Invalid username or password");
+                });
         
-        if (!admin.getIsEnabled()) {
-            rateLimitingService.recordFailedAttempt(identifier);
-            throw new BadCredentialsException("Account is deactivated");
-        }
-
+        // Validate user status
+        validateUserStatus(admin, identifier);
+        
+        // Validate password
         if (!passwordEncoder.matches(request.getPassword(), admin.getPassword())) {
             rateLimitingService.recordFailedAttempt(identifier);
-            throw new BadCredentialsException("Invalid username or password");
+            throw new UserNotFoundException("Invalid username or password");
         }
 
-        // Successful login - clear failed attempts
+        // Successful login - clear failed attempts and update login info
         rateLimitingService.recordSuccessfulAttempt(identifier);
+        updateLoginInfo(admin);
 
-        // Update last login
-        admin.setLastLoginAt(LocalDateTime.now());
-        admin.setLastLoginIp("unknown");
-        adminRepository.save(admin);
-
-        // Generate proper JWT tokens
+        // Generate tokens and create session
         String accessToken = jwtService.generateAccessToken(
-            admin.getId(), 
-            admin.getUsername(), 
-            admin.getEmail(), 
-            admin.getRole().name()
-        );
+                admin.getId(), admin.getUsername(), admin.getEmail(), admin.getRole().name());
         String refreshToken = jwtService.generateRefreshToken(admin.getId());
         
-        // Create session
-        String sessionId = UUID.randomUUID().toString();
-        LocalDateTime expiresAt = LocalDateTime.now().plus(1, ChronoUnit.HOURS);
-        sessionService.createSession(
-            admin.getId(), 
-            sessionId, 
-            accessToken, 
-            refreshToken, 
-            "unknown", 
-            null, 
-            expiresAt
-        );
+        createSession(admin.getId(), accessToken, refreshToken);
 
-        LoginResponse.AdminResponse adminResponse = LoginResponse.AdminResponse.builder()
-                .id(admin.getId())
-                .username(admin.getUsername())
-                .email(admin.getEmail())
-                .firstName(admin.getFirstName())
-                .lastName(admin.getLastName())
-                .fullName(admin.getFirstName() + " " + admin.getLastName())
-                .profileImageUrl(admin.getProfileImageUrl())
-                .role(admin.getRole())
-                .permissions(List.of("READ", "WRITE", "ADMIN"))
-                .build();
-
-        return LoginResponse.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .tokenType("Bearer")
-                .expiresIn(3600L)
-                .admin(adminResponse)
-                .build();
+        return buildLoginResponse(admin, accessToken, refreshToken);
     }
 
     @Override
     public void logout(String token) {
         log.info("Logging out user with token");
-        if (token != null && !token.isEmpty()) {
+        if (token != null && !token.trim().isEmpty()) {
             tokenBlacklistService.blacklistToken(token);
             sessionService.deactivateSessionByAccessToken(token);
         }
@@ -139,76 +106,42 @@ public class AuthServiceImpl implements AuthService {
         
         // Validate refresh token
         if (!jwtService.isRefreshToken(refreshToken)) {
-            throw new BadCredentialsException("Invalid refresh token");
+            throw new AuthenticationException("Invalid refresh token", "INVALID_REFRESH_TOKEN");
         }
         
         // Check if token is blacklisted
         if (tokenBlacklistService.isTokenBlacklisted(refreshToken)) {
-            throw new BadCredentialsException("Refresh token is blacklisted");
+            throw new AuthenticationException("Refresh token is blacklisted", "TOKEN_BLACKLISTED");
         }
         
-        // Extract user info from refresh token
+        // Extract and validate user
         UUID userId = jwtService.extractUserId(refreshToken);
-        Optional<Admin> adminOpt = adminRepository.findById(userId);
+        Admin admin = adminRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
         
-        if (adminOpt.isEmpty()) {
-            throw new BadCredentialsException("User not found");
-        }
+        validateUserStatus(admin, userId.toString());
         
-        Admin admin = adminOpt.get();
-        if (!admin.getIsEnabled()) {
-            throw new BadCredentialsException("Account is deactivated");
-        }
-        
-        // Generate new tokens
+        // Generate new tokens and update session
         String newAccessToken = jwtService.generateAccessToken(
-            admin.getId(), 
-            admin.getUsername(), 
-            admin.getEmail(), 
-            admin.getRole().name()
-        );
+                admin.getId(), admin.getUsername(), admin.getEmail(), admin.getRole().name());
         String newRefreshToken = jwtService.generateRefreshToken(admin.getId());
         
-        // Update session
-        Optional<UserSession> sessionOpt = sessionService.findByRefreshToken(refreshToken);
-        if (sessionOpt.isPresent()) {
-            UserSession session = sessionOpt.get();
-            session.setAccessToken(newAccessToken);
-            session.setRefreshToken(newRefreshToken);
-            session.setExpiresAt(LocalDateTime.now().plus(1, ChronoUnit.HOURS));
-            session.setLastAccessedAt(LocalDateTime.now());
-            sessionService.updateLastAccessed(session.getId());
-        }
-        
-        // Blacklist old refresh token
+        updateExistingSession(refreshToken, newAccessToken, newRefreshToken);
         tokenBlacklistService.blacklistToken(refreshToken);
         
-        LoginResponse.AdminResponse adminResponse = LoginResponse.AdminResponse.builder()
-                .id(admin.getId())
-                .username(admin.getUsername())
-                .email(admin.getEmail())
-                .firstName(admin.getFirstName())
-                .lastName(admin.getLastName())
-                .fullName(admin.getFirstName() + " " + admin.getLastName())
-                .profileImageUrl(admin.getProfileImageUrl())
-                .role(admin.getRole())
-                .permissions(List.of("READ", "WRITE", "ADMIN"))
-                .build();
-        
-        return LoginResponse.builder()
-                .accessToken(newAccessToken)
-                .refreshToken(newRefreshToken)
-                .tokenType("Bearer")
-                .expiresIn(3600L)
-                .admin(adminResponse)
-                .build();
+        return buildLoginResponse(admin, newAccessToken, newRefreshToken);
     }
 
     @Override
     public boolean validateToken(String token) {
         try {
+            if (token == null || token.trim().isEmpty()) {
+                return false;
+            }
+            
             // Check if token is blacklisted
             if (tokenBlacklistService.isTokenBlacklisted(token)) {
+                log.debug("Token is blacklisted: {}", token.substring(0, Math.min(10, token.length())));
                 return false;
             }
             
@@ -225,14 +158,9 @@ public class AuthServiceImpl implements AuthService {
     public Admin createAdmin(CreateAdminRequest request) {
         log.info("Creating new admin: {}", request.getUsername());
         
-        if (adminRepository.existsByUsername(request.getUsername())) {
-            throw new IllegalArgumentException("Username already exists");
-        }
-
-        if (adminRepository.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException("Email already exists");
-        }
-
+        // Validate request
+        validateCreateAdminRequest(request);
+        
         Admin admin = Admin.builder()
                 .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
@@ -246,17 +174,10 @@ public class AuthServiceImpl implements AuthService {
 
         Admin savedAdmin = adminRepository.save(admin);
         
-        // Send welcome email
-        emailService.sendWelcomeEmail(savedAdmin.getEmail(), savedAdmin.getUsername());
-        
-        // Create email verification token
-        EmailVerificationToken verificationToken = EmailVerificationToken.builder()
-                .adminId(savedAdmin.getId())
-                .email(savedAdmin.getEmail())
-                .build();
-        
-        emailVerificationTokenRepository.save(verificationToken);
-        emailService.sendEmailVerification(savedAdmin.getEmail(), savedAdmin.getId(), verificationToken.getToken());
+        // Send welcome email if enabled
+        if (emailService.isEmailEnabled()) {
+            sendWelcomeEmail(savedAdmin);
+        }
         
         return savedAdmin;
     }
@@ -283,38 +204,12 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public Admin updateAdmin(UUID id, UpdateAdminRequest request) {
-        Optional<Admin> adminOpt = adminRepository.findById(id);
-        if (adminOpt.isEmpty()) {
-            throw new IllegalArgumentException("Admin not found");
-        }
-
-        Admin admin = adminOpt.get();
+        Admin admin = adminRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("Admin not found"));
         
-        if (request.getUsername() != null) {
-            admin.setUsername(request.getUsername());
-        }
-        if (request.getEmail() != null) {
-            admin.setEmail(request.getEmail());
-        }
-        if (request.getFirstName() != null) {
-            admin.setFirstName(request.getFirstName());
-        }
-        if (request.getLastName() != null) {
-            admin.setLastName(request.getLastName());
-        }
-        if (request.getPhoneNumber() != null) {
-            admin.setPhone(request.getPhoneNumber());
-        }
-        if (request.getRole() != null) {
-            admin.setRole(request.getRole());
-        }
-        if (request.getIsActive() != null) {
-            admin.setIsEnabled(request.getIsActive());
-        }
-        if (request.getProfileImageUrl() != null) {
-            admin.setProfileImageUrl(request.getProfileImageUrl());
-        }
-
+        // Update fields if provided
+        updateAdminFields(admin, request);
+        
         return adminRepository.save(admin);
     }
 
@@ -345,19 +240,24 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void changePassword(UUID adminId, String currentPassword, String newPassword) {
-        Optional<Admin> adminOpt = adminRepository.findById(adminId);
-        if (adminOpt.isEmpty()) {
-            throw new IllegalArgumentException("Admin not found");
-        }
-
-        Admin admin = adminOpt.get();
+        Admin admin = adminRepository.findById(adminId)
+                .orElseThrow(() -> new UserNotFoundException("Admin not found"));
         
+        // Validate current password
         if (!passwordEncoder.matches(currentPassword, admin.getPassword())) {
-            throw new BadCredentialsException("Current password is incorrect");
+            throw new AuthenticationException("Current password is incorrect", "INVALID_PASSWORD");
         }
-
+        
+        // Validate new password
+        if (newPassword == null || newPassword.length() < 6) {
+            throw new ValidationException("New password must be at least 6 characters");
+        }
+        
         admin.setPassword(passwordEncoder.encode(newPassword));
+        admin.setPasswordChangedAt(LocalDateTime.now());
         adminRepository.save(admin);
+        
+        log.info("Password changed successfully for admin: {}", admin.getUsername());
     }
 
     @Override
@@ -403,21 +303,164 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public Admin updateProfile(UUID adminId, UpdateProfileRequest request) {
-        Optional<Admin> adminOpt = adminRepository.findById(adminId);
-        if (adminOpt.isEmpty()) {
-            throw new IllegalArgumentException("Admin not found");
+    public void confirmPasswordReset(String token, String newPassword) {
+        log.info("Confirming password reset with token: {}", token);
+        
+        Optional<PasswordResetToken> tokenOpt = passwordResetTokenRepository.findByToken(token);
+        if (tokenOpt.isEmpty()) {
+            throw new ValidationException("Invalid reset token");
         }
-
+        
+        PasswordResetToken resetToken = tokenOpt.get();
+        
+        // Check if token is used
+        if (resetToken.getIsUsed()) {
+            throw new ValidationException("Reset token has already been used");
+        }
+        
+        // Check if token is expired
+        if (resetToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new ValidationException("Reset token has expired");
+        }
+        
+        // Find admin
+        Optional<Admin> adminOpt = adminRepository.findById(resetToken.getAdminId());
+        if (adminOpt.isEmpty()) {
+            throw new ValidationException("Admin not found");
+        }
+        
         Admin admin = adminOpt.get();
         
+        // Validate new password
+        if (newPassword == null || newPassword.length() < 6) {
+            throw new ValidationException("Password must be at least 6 characters");
+        }
+        
+        // Update password
+        admin.setPassword(passwordEncoder.encode(newPassword));
+        admin.setPasswordChangedAt(LocalDateTime.now());
+        adminRepository.save(admin);
+        
+        // Mark token as used
+        resetToken.setIsUsed(true);
+        passwordResetTokenRepository.save(resetToken);
+        
+        // Revoke all sessions for this admin
+        sessionService.deactivateAllSessions(admin.getId());
+        
+        log.info("Password reset completed for admin: {}", admin.getUsername());
+    }
+
+    @Override
+    public boolean validatePasswordResetToken(String token) {
+        log.info("Validating password reset token: {}", token);
+        
+        Optional<PasswordResetToken> tokenOpt = passwordResetTokenRepository.findByToken(token);
+        if (tokenOpt.isEmpty()) {
+            return false;
+        }
+        
+        PasswordResetToken resetToken = tokenOpt.get();
+        
+        // Check if token is used or expired
+        return !resetToken.getIsUsed() && resetToken.getExpiresAt().isAfter(LocalDateTime.now());
+    }
+
+    /**
+     * Validates create admin request.
+     */
+    private void validateCreateAdminRequest(CreateAdminRequest request) {
+        if (request.getUsername() == null || request.getUsername().trim().isEmpty()) {
+            throw new ValidationException("Username is required");
+        }
+        if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
+            throw new ValidationException("Email is required");
+        }
+        if (request.getPassword() == null || request.getPassword().length() < 6) {
+            throw new ValidationException("Password must be at least 6 characters");
+        }
+        if (adminRepository.existsByUsername(request.getUsername())) {
+            throw new ValidationException("Username already exists");
+        }
+        if (adminRepository.existsByEmail(request.getEmail())) {
+            throw new ValidationException("Email already exists");
+        }
+    }
+
+    /**
+     * Updates admin fields from request.
+     */
+    private void updateAdminFields(Admin admin, UpdateAdminRequest request) {
+        if (request.getUsername() != null && !request.getUsername().trim().isEmpty()) {
+            if (!request.getUsername().equals(admin.getUsername()) && 
+                adminRepository.existsByUsername(request.getUsername())) {
+                throw new ValidationException("Username already exists");
+            }
+            admin.setUsername(request.getUsername());
+        }
+        if (request.getEmail() != null && !request.getEmail().trim().isEmpty()) {
+            if (!request.getEmail().equals(admin.getEmail()) && 
+                adminRepository.existsByEmail(request.getEmail())) {
+                throw new ValidationException("Email already exists");
+            }
+            admin.setEmail(request.getEmail());
+        }
         if (request.getFirstName() != null) {
             admin.setFirstName(request.getFirstName());
         }
         if (request.getLastName() != null) {
             admin.setLastName(request.getLastName());
         }
-        if (request.getEmail() != null) {
+        if (request.getPhoneNumber() != null) {
+            admin.setPhone(request.getPhoneNumber());
+        }
+        if (request.getRole() != null) {
+            admin.setRole(request.getRole());
+        }
+        if (request.getIsActive() != null) {
+            admin.setIsEnabled(request.getIsActive());
+        }
+        if (request.getProfileImageUrl() != null) {
+            admin.setProfileImageUrl(request.getProfileImageUrl());
+        }
+    }
+
+    /**
+     * Sends welcome email to new admin.
+     */
+    private void sendWelcomeEmail(Admin admin) {
+        try {
+            // Create email verification token
+            EmailVerificationToken verificationToken = EmailVerificationToken.builder()
+                    .adminId(admin.getId())
+                    .email(admin.getEmail())
+                    .build();
+            
+            emailVerificationTokenRepository.save(verificationToken);
+            emailService.sendEmailVerification(admin.getEmail(), admin.getId(), verificationToken.getToken());
+            emailService.sendWelcomeEmail(admin.getEmail(), admin.getUsername());
+        } catch (Exception e) {
+            log.error("Failed to send welcome email to {}: {}", admin.getEmail(), e.getMessage());
+        }
+    }
+
+    @Override
+    public Admin updateProfile(UUID adminId, UpdateProfileRequest request) {
+        Admin admin = adminRepository.findById(adminId)
+                .orElseThrow(() -> new UserNotFoundException("Admin not found"));
+        
+        // Update profile fields
+        if (request.getFirstName() != null && !request.getFirstName().trim().isEmpty()) {
+            admin.setFirstName(request.getFirstName());
+        }
+        if (request.getLastName() != null && !request.getLastName().trim().isEmpty()) {
+            admin.setLastName(request.getLastName());
+        }
+        if (request.getEmail() != null && !request.getEmail().trim().isEmpty()) {
+            if (!request.getEmail().equals(admin.getEmail()) && 
+                adminRepository.existsByEmail(request.getEmail())) {
+                throw new ValidationException("Email already exists");
+            }
             admin.setEmail(request.getEmail());
         }
         if (request.getPhoneNumber() != null) {
@@ -432,22 +475,20 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void updateProfileImage(UUID adminId, String imageUrl) {
-        Optional<Admin> adminOpt = adminRepository.findById(adminId);
-        if (adminOpt.isPresent()) {
-            Admin admin = adminOpt.get();
-            admin.setProfileImageUrl(imageUrl);
-            adminRepository.save(admin);
-        }
+        Admin admin = adminRepository.findById(adminId)
+                .orElseThrow(() -> new UserNotFoundException("Admin not found"));
+        
+        admin.setProfileImageUrl(imageUrl);
+        adminRepository.save(admin);
     }
 
     @Override
     public void recordLogin(UUID adminId, String ipAddress) {
-        Optional<Admin> adminOpt = adminRepository.findById(adminId);
-        if (adminOpt.isPresent()) {
-            Admin admin = adminOpt.get();
+        adminRepository.findById(adminId).ifPresent(admin -> {
             admin.setLastLoginAt(LocalDateTime.now());
+            admin.setLastLoginIp(ipAddress);
             adminRepository.save(admin);
-        }
+        });
     }
 
     @Override
@@ -488,26 +529,99 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public boolean hasPermission(UUID adminId, String permission) {
-        Optional<Admin> adminOpt = adminRepository.findById(adminId);
-        if (adminOpt.isEmpty()) {
-            return false;
-        }
-        
-        Admin admin = adminOpt.get();
-        // Simplified permission check
-        return admin.getIsEnabled() && admin.getRole() == Admin.AdminRole.SUPER_ADMIN;
-    }
-
-    @Override
-    public boolean hasRole(UUID adminId, Admin.AdminRole role) {
-        Optional<Admin> adminOpt = adminRepository.findById(adminId);
-        return adminOpt.map(admin -> admin.getRole() == role).orElse(false);
-    }
-
-    @Override
     public List<Admin> getAdminsByRole(Admin.AdminRole role) {
         return adminRepository.findByRole(role);
+    }
+
+    // ==================== Helper Methods ====================
+
+    /**
+     * Validates user status and throws appropriate exceptions.
+     */
+    private void validateUserStatus(Admin admin, String identifier) {
+        if (!admin.getIsEnabled()) {
+            rateLimitingService.recordFailedAttempt(identifier);
+            throw new AuthenticationException("Account is deactivated", "ACCOUNT_DEACTIVATED");
+        }
+    }
+
+    /**
+     * Updates login information for admin user.
+     */
+    private void updateLoginInfo(Admin admin) {
+        admin.setLastLoginAt(LocalDateTime.now());
+        admin.setLastLoginIp("unknown"); // TODO: Extract from request
+        adminRepository.save(admin);
+    }
+
+    /**
+     * Creates a new user session.
+     */
+    private void createSession(UUID adminId, String accessToken, String refreshToken) {
+        String sessionId = UUID.randomUUID().toString();
+        LocalDateTime expiresAt = LocalDateTime.now().plus(1, ChronoUnit.HOURS);
+        sessionService.createSession(
+                adminId, sessionId, accessToken, refreshToken, 
+                "unknown", null, expiresAt); // TODO: Extract IP and user agent from request
+    }
+
+    /**
+     * Updates existing session with new tokens.
+     */
+    private void updateExistingSession(String oldRefreshToken, String newAccessToken, String newRefreshToken) {
+        sessionService.findByRefreshToken(oldRefreshToken)
+                .ifPresent(session -> {
+                    session.setAccessToken(newAccessToken);
+                    session.setRefreshToken(newRefreshToken);
+                    session.setExpiresAt(LocalDateTime.now().plus(1, ChronoUnit.HOURS));
+                    session.setLastAccessedAt(LocalDateTime.now());
+                    sessionService.updateLastAccessed(session.getId());
+                });
+    }
+
+    /**
+     * Builds login response with admin data.
+     */
+    private LoginResponse buildLoginResponse(Admin admin, String accessToken, String refreshToken) {
+        LoginResponse.AdminResponse adminResponse = LoginResponse.AdminResponse.builder()
+                .id(admin.getId())
+                .username(admin.getUsername())
+                .email(admin.getEmail())
+                .firstName(admin.getFirstName())
+                .lastName(admin.getLastName())
+                .fullName(admin.getFirstName() + " " + admin.getLastName())
+                .profileImageUrl(admin.getProfileImageUrl())
+                .role(admin.getRole())
+                .permissions(getPermissionsForRole(admin.getRole()))
+                .build();
+
+        return LoginResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .tokenType("Bearer")
+                .expiresIn(3600L)
+                .admin(adminResponse)
+                .build();
+    }
+
+    /**
+     * Gets permissions based on user role.
+     */
+    private List<String> getPermissionsForRole(Admin.AdminRole role) {
+        return switch (role) {
+            case SUPER_ADMIN -> List.of("USER_READ", "USER_WRITE", "USER_DELETE",
+                    "ROLE_READ", "ROLE_WRITE", "ROLE_DELETE",
+                    "MENU_READ", "MENU_WRITE", "MENU_DELETE",
+                    "ORDER_READ", "ORDER_WRITE", "ORDER_DELETE",
+                    "SYSTEM_CONFIG", "SYSTEM_ADMIN");
+            case RESTAURANT_ADMIN -> List.of("MENU_READ", "MENU_WRITE", "MENU_DELETE",
+                    "ORDER_READ", "ORDER_WRITE", "ORDER_DELETE",
+                    "STAFF_MANAGEMENT");
+            case MANAGER -> List.of("MENU_READ", "MENU_WRITE",
+                    "ORDER_READ", "ORDER_WRITE", "ORDER_DELETE");
+            case STAFF -> List.of("MENU_READ", "ORDER_READ", "ORDER_WRITE");
+            default -> List.of();
+        };
     }
 
 }
