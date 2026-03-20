@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${error + ' - KitchenLab'}">Error - KitchenLab</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #FF6B35;
+            --secondary: #F7931E;
+            --warning: #F59E0B;
+            --danger: #DC2626;
+            --info: #3B82F6;
+            --dark: #2D3748;
+            --light: #F7FAFC;
+        }
+        
+        /* Dynamic gradient based on error type */
+        .error-gradient-400 { background: linear-gradient(135deg, var(--warning) 0%, #F59E0B 100%); }
+        .error-gradient-401 { background: linear-gradient(135deg, var(--warning) 0%, #F59E0B 100%); }
+        .error-gradient-403 { background: linear-gradient(135deg, var(--danger) 0%, #EF4444 100%); }
+        .error-gradient-404 { background: linear-gradient(135deg, var(--info) 0%, #2563EB 100%); }
+        .error-gradient-500 { background: linear-gradient(135deg, var(--danger) 0%, #EF4444 100%); }
+        .error-gradient-default { background: linear-gradient(135deg, var(--info) 0%, #2563EB 100%); }
+        
+        /* Dynamic animations */
+        .bounce { animation: bounce 2s infinite; }
+        .shake { animation: shake 0.5s infinite; animation-delay: 1s; }
+        .pulse { animation: pulse 2s infinite; }
+        .search-animation { animation: search 3s infinite; }
+        .float-animation { animation: float 3s ease-in-out infinite; }
+        .forbidden-icon { animation: forbidden-pulse 2s infinite; }
+        .magnifying-glass { animation: rotate 4s linear infinite; }
+        .server-icon { animation: shake 0.5s infinite; animation-delay: 1s; }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        @keyframes search {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-20px) scale(1.1); }
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        @keyframes forbidden-pulse {
+            0% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.1) rotate(10deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+        
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center">
+    <div class="container mx-auto px-4">
+        <div class="max-w-2xl mx-auto text-center">
+            <!-- Dynamic Error Icon -->
+            <div class="mb-8">
+                <div th:class="'w-32 h-32 rounded-full flex items-center justify-center mx-auto error-gradient-' + ${status} + ' error-gradient-default'">
+                    <i th:class="'text-white text-5xl ' + ${iconClass}" class="fas"></i>
+                </div>
+            </div>
+            
+            <!-- Error Code -->
+            <h1 class="text-8xl font-bold text-gray-800 mb-4" th:text="${status}">Error</h1>
+            
+            <!-- Error Title -->
+            <h2 class="text-3xl font-semibold text-gray-700 mb-4" th:text="${error}">Something Went Wrong</h2>
+            
+            <!-- Error Message -->
+            <p class="text-lg text-gray-600 mb-8" th:text="${message}">
+                An unexpected error occurred. Please try again later.
+            </p>
+            
+            <!-- Dynamic Content Based on Error Type -->
+            
+            <!-- 400 Bad Request -->
+            <div th:if="${status == 400}" class="bg-white rounded-lg shadow-md p-6 mb-8 text-left">
+                <h3 class="text-lg font-semibold text-gray-700 mb-3">What happened?</h3>
+                <ul class="text-gray-600 space-y-2">
+                    <li><i class="fas fa-check-circle text-green-500 mr-2"></i>The request sent to the server was invalid</li>
+                    <li><i class="fas fa-check-circle text-green-500 mr-2"></i>This could be due to malformed data or incorrect parameters</li>
+                    <li><i class="fas fa-check-circle text-green-500 mr-2"></i>Please check your request and try again</li>
+                </ul>
+            </div>
+            
+            <!-- 401 Unauthorized -->
+            <div th:if="${status == 401}" class="bg-white rounded-lg shadow-md p-6 mb-8 text-left">
+                <h3 class="text-lg font-semibold text-gray-700 mb-3">What this means:</h3>
+                <ul class="text-gray-600 space-y-2">
+                    <li><i class="fas fa-user-lock text-yellow-500 mr-2"></i>You need to log in to access this page</li>
+                    <li><i class="fas fa-shield-alt text-orange-500 mr-2"></i>This resource requires authentication</li>
+                    <li><i class="fas fa-key text-green-500 mr-2"></i>Please log in with your credentials</li>
+                </ul>
+            </div>
+            
+            <!-- 403 Forbidden -->
+            <div th:if="${status == 403}" class="bg-white rounded-lg shadow-md p-6 mb-8 text-left">
+                <h3 class="text-lg font-semibold text-gray-700 mb-3">Why this happened:</h3>
+                <ul class="text-gray-600 space-y-2">
+                    <li><i class="fas fa-user-times text-red-500 mr-2"></i>Your account doesn't have the required permissions</li>
+                    <li><i class="fas fa-shield-alt text-orange-500 mr-2"></i>This resource requires special access rights</li>
+                    <li><i class="fas fa-user-shield text-yellow-500 mr-2"></i>Please contact your administrator if you need access</li>
+                </ul>
+                
+                <h3 class="text-lg font-semibold text-gray-700 mb-3 mt-4">What you can do:</h3>
+                <ul class="text-gray-600 space-y-2">
+                    <li><i class="fas fa-sign-out-alt text-blue-500 mr-2"></i>Try logging in with a different account</li>
+                    <li><i class="fas fa-envelope text-green-500 mr-2"></i>Contact your system administrator</li>
+                    <li><i class="fas fa-history text-purple-500 mr-2"></i>Go back to the previous page</li>
+                </ul>
+            </div>
+            
+            <!-- 404 Not Found -->
+            <div th:if="${status == 404}" class="bg-white rounded-lg shadow-md p-6 mb-8">
+                <!-- Search Box -->
+                <h3 class="text-lg font-semibold text-gray-700 mb-3">Try searching for what you need:</h3>
+                <div class="flex gap-2 mb-4">
+                    <input type="text" 
+                           placeholder="Search for pages, features, or help..." 
+                           class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <button class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-search mr-2"></i>Search
+                    </button>
+                </div>
+                
+                <!-- Popular Links -->
+                <h3 class="text-lg font-semibold text-gray-700 mb-3">Popular Pages:</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <a href="/admin/dashboard" class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                        <i class="fas fa-tachometer-alt text-blue-500 mr-3"></i>
+                        <span class="text-gray-700">Dashboard</span>
+                    </a>
+                    <a href="/admin/restaurant-menu" class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                        <i class="fas fa-utensils text-green-500 mr-3"></i>
+                        <span class="text-gray-700">Menu Management</span>
+                    </a>
+                    <a href="/admin/restaurant-orders" class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                        <i class="fas fa-shopping-cart text-orange-500 mr-3"></i>
+                        <span class="text-gray-700">Orders</span>
+                    </a>
+                    <a href="/admin/restaurant-settings" class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                        <i class="fas fa-cog text-purple-500 mr-3"></i>
+                        <span class="text-gray-700">Settings</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- 500 Internal Server Error -->
+            <div th:if="${status == 500}" class="bg-white rounded-lg shadow-md p-6 mb-8 text-left">
+                <h3 class="text-lg font-semibold text-gray-700 mb-3">What this means:</h3>
+                <ul class="text-gray-600 space-y-2">
+                    <li><i class="fas fa-info-circle text-blue-500 mr-2"></i>The server encountered an unexpected condition</li>
+                    <li><i class="fas fa-tools text-orange-500 mr-2"></i>Our technical team has been automatically notified</li>
+                    <li><i class="fas fa-clock text-green-500 mr-2"></i>We're working to resolve this as quickly as possible</li>
+                </ul>
+                
+                <h3 class="text-lg font-semibold text-gray-700 mb-3 mt-4">What you can do:</h3>
+                <ul class="text-gray-600 space-y-2">
+                    <li><i class="fas fa-redo text-purple-500 mr-2"></i>Try refreshing the page in a few moments</li>
+                    <li><i class="fas fa-history text-indigo-500 mr-2"></i>Go back to the previous page</li>
+                    <li><i class="fas fa-home text-teal-500 mr-2"></i>Navigate to the homepage</li>
+                </ul>
+                
+                <!-- Error Reference -->
+                <div class="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <p class="text-sm text-blue-800">
+                        <i class="fas fa-hashtag mr-2"></i>
+                        Error Reference: <code class="bg-blue-100 px-2 py-1 rounded">ERR-500-<span th:text="${timestamp}"></span></code>
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Generic Error for other codes -->
+            <div th:if="${status != 400 and status != 401 and status != 403 and status != 404 and status != 500}" 
+                 class="bg-white rounded-lg shadow-md p-6 mb-8 text-left">
+                <h3 class="text-lg font-semibold text-gray-700 mb-3">Error Details:</h3>
+                <div class="space-y-2">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Status Code:</span>
+                        <code class="bg-gray-100 px-2 py-1 rounded text-sm" th:text="${status}">N/A</code>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Error Type:</span>
+                        <code class="bg-gray-100 px-2 py-1 rounded text-sm" th:text="${error}">N/A</code>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Path:</span>
+                        <code class="bg-gray-100 px-2 py-1 rounded text-sm text-xs" th:text="${path}">N/A</code>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Timestamp:</span>
+                        <code class="bg-gray-100 px-2 py-1 rounded text-sm" th:text="${timestamp}">N/A</code>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Dynamic Action Buttons -->
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <!-- 500: Refresh button -->
+                <button th:if="${status == 500}" 
+                        onclick="location.reload()" 
+                        th:class="'error-gradient-' + ${status} + ' error-gradient-default text-white px-8 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity'">
+                    <i class="fas fa-redo mr-2"></i>Refresh Page
+                </button>
+                
+                <!-- 401: Login button -->
+                <a th:if="${status == 401}" 
+                   href="/auth/login" 
+                   th:class="'error-gradient-' + ${status} + ' error-gradient-default text-white px-8 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity'">
+                    <i class="fas fa-sign-in-alt mr-2"></i>Login Now
+                </a>
+                
+                <!-- 403: Switch Account button -->
+                <a th:if="${status == 403}" 
+                   href="/auth/logout" 
+                   th:class="'error-gradient-' + ${status} + ' error-gradient-default text-white px-8 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity'">
+                    <i class="fas fa-sign-out-alt mr-2"></i>Switch Account
+                </a>
+                
+                <!-- 404: Dashboard button -->
+                <a th:if="${status == 404}" 
+                   href="/admin/dashboard" 
+                   th:class="'error-gradient-' + ${status} + ' error-gradient-default text-white px-8 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity'">
+                    <i class="fas fa-home mr-2"></i>Go to Dashboard
+                </a>
+                
+                <!-- 400: Login button -->
+                <a th:if="${status == 400}" 
+                   href="/auth/login" 
+                   th:class="'error-gradient-' + ${status} + ' error-gradient-default text-white px-8 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity'">
+                    <i class="fas fa-sign-in-alt mr-2"></i>Go to Login
+                </a>
+                
+                <!-- Generic: Try Again button -->
+                <button th:if="${status != 400 and status != 401 and status != 403 and status != 404 and status != 500}" 
+                        onclick="location.reload()" 
+                        th:class="'error-gradient-' + ${status} + ' error-gradient-default text-white px-8 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity'">
+                    <i class="fas fa-redo mr-2"></i>Try Again
+                </button>
+                
+                <!-- Common: Go Back button -->
+                <button onclick="history.back()" 
+                        class="bg-gray-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-gray-700 transition-colors">
+                    <i class="fas fa-arrow-left mr-2"></i>Go Back
+                </button>
+                
+                <!-- Common: Home button -->
+                <a href="/" 
+                   class="border-2 border-gray-300 text-gray-700 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+                    <i class="fas fa-home mr-2"></i>Home
+                </a>
+            </div>
+            
+            <!-- Support Information -->
+            <div class="mt-12 text-center">
+                <p class="text-gray-500 text-sm mb-4">
+                    <i class="fas fa-headset mr-2"></i>
+                    <span th:if="${status == 403}">Need access? Contact your administrator</span>
+                    <span th:if="${status != 403}">If this problem continues, please contact our support team</span>
+                </p>
+                <div class="flex justify-center gap-4">
+                    <a href="mailto:support@kitchenlab.com" class="text-blue-600 hover:text-blue-800 underline">
+                        <i class="fas fa-envelope mr-1"></i>support@kitchenlab.com
+                    </a>
+                    <span class="text-gray-400">|</span>
+                    <a href="tel:+1234567890" class="text-blue-600 hover:text-blue-800 underline">
+                        <i class="fas fa-phone mr-1"></i>1-234-567-890
+                    </a>
+                </div>
+                
+                <!-- Error Reference (for 500 and others) -->
+                <p th:if="${status == 500 or (status != 400 and status != 401 and status != 403 and status != 404 and status != 500)}" 
+                   class="text-gray-400 text-sm mt-4">
+                    Error Reference: <code class="bg-gray-100 px-2 py-1 rounded">ERR-<span th:text="${status}"></span>-<span th:text="${timestamp}"></span></code>
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Dynamic error handling
+        document.addEventListener('DOMContentLoaded', function() {
+            const status = parseInt('[[${status}]]');
+            const path = '[[${path}]]';
+            const timestamp = '[[${timestamp}]]';
+            
+            // Log error details for debugging
+            console.log('Error Details:', {
+                status: status,
+                error: '[[${error}]]',
+                message: '[[${message}]]',
+                path: path,
+                timestamp: timestamp
+            });
+            
+            // Add search functionality for 404
+            if (status === 404) {
+                const searchInput = document.querySelector('input[type="text"]');
+                const searchButton = document.querySelector('button');
+                
+                if (searchButton && searchInput) {
+                    searchButton.addEventListener('click', function() {
+                        const query = searchInput.value.trim();
+                        if (query) {
+                            console.log('Searching for:', query);
+                            alert('Search functionality coming soon! You searched for: ' + query);
+                        }
+                    });
+                    
+                    searchInput.addEventListener('keypress', function(e) {
+                        if (e.key === 'Enter') {
+                            searchButton.click();
+                        }
+                    });
+                }
+            }
+            
+            // Auto-refresh for server errors
+            if (status >= 500 && status < 600) {
+                setTimeout(() => {
+                    if (confirm('Would you like to try refreshing the page?')) {
+                        location.reload();
+                    }
+                }, 30000);
+            }
+            
+            // Send error to analytics
+            if (typeof gtag !== 'undefined') {
+                gtag('event', 'exception', {
+                    description: 'Error ' + status + ': ' + '[[${error}]]',
+                    fatal: status >= 500
+                });
+            }
+        });
+    </script>
+</body>
+</html>

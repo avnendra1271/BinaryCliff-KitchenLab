@@ -11,12 +11,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
- * Base entity class providing common fields for all entities.
- * Follows JPA best practices and includes audit fields.
- * 
- * @author BinaryCliff Team
- * @version 1.0
- * @since 1.0
+ * Base entity class for root entities like Restaurant that don't have a restaurant_id.
  */
 @Data
 @NoArgsConstructor
@@ -24,15 +19,12 @@ import java.util.UUID;
 @SuperBuilder
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
-public abstract class BaseEntity {
+public abstract class RootBaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id")
     private UUID id;
-
-    @Column(name = "restaurant_id", nullable = false)
-    private UUID restaurantId;
 
     @Column(name = "is_deleted", nullable = false)
     private Boolean isDeleted = false;

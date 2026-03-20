@@ -1,6 +1,7 @@
 package com.binarycliff.kitchenlab.auth.entity;
 
 import com.binarycliff.kitchenlab.common.entity.BaseEntity;
+import com.binarycliff.kitchenlab.tenant.filter.TenantAware;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,6 +15,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Admin user entity for authentication and authorization.
@@ -25,7 +27,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class Admin extends BaseEntity implements UserDetails {
+public class Admin extends BaseEntity implements UserDetails, TenantAware {
     
     @Column(unique = true, nullable = false, length = 100)
     private String username;
@@ -65,6 +67,13 @@ public class Admin extends BaseEntity implements UserDetails {
     @Column
     private LocalDateTime passwordChangedAt;
     
+    @Column(name = "restaurant_id", nullable = false)
+    private UUID restaurantId;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "restaurant_id", insertable = false, updatable = false)
+    private com.binarycliff.kitchenlab.tenant.entity.Restaurant restaurant;
+    
     @ElementCollection
     @CollectionTable(name = "admin_permissions", joinColumns = @JoinColumn(name = "admin_id"))
     @Column(name = "permission")
@@ -98,6 +107,16 @@ public class Admin extends BaseEntity implements UserDetails {
     @Transient
     public String getFullName() {
         return firstName + " " + lastName;
+    }
+    
+    @Override
+    public UUID getTenantId() {
+        return restaurantId;
+    }
+    
+    @Override
+    public void setTenantId(UUID tenantId) {
+        this.restaurantId = tenantId;
     }
     
     public enum AdminRole {

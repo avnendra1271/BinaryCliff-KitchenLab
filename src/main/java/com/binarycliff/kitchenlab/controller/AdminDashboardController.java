@@ -2,13 +2,21 @@ package com.binarycliff.kitchenlab.controller;
 
 import com.binarycliff.kitchenlab.auth.entity.Admin;
 import com.binarycliff.kitchenlab.auth.repository.AdminRepository;
+import com.binarycliff.kitchenlab.tenant.context.TenantContext;
+import com.binarycliff.kitchenlab.tenant.entity.Restaurant;
+import com.binarycliff.kitchenlab.tenant.repository.RestaurantRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+
+import java.util.List;
+import java.util.UUID;
 
 /**
  * MVC Controller for admin dashboard routing.
@@ -17,9 +25,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @Controller
 @RequestMapping("/admin")
 @RequiredArgsConstructor
+@Slf4j
 public class AdminDashboardController {
     
     private final AdminRepository adminRepository;
+    private final RestaurantRepository restaurantRepository;
     
     /**
      * Route to appropriate dashboard based on user role.
@@ -61,19 +71,84 @@ public class AdminDashboardController {
     /**
      * SUPER_ADMIN specific dashboard.
      */
-    @GetMapping("/super-dashboard")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public String superDashboard() {
-        return "admin/restaurant-admin-dashboard";
+    @GetMapping("/restaurant-dashboard")
+    @PreAuthorize("hasRole('RESTAURANT_ADMIN')")
+    public String restaurantDashboard() {
+        return "admin/kitchenlab-admin";
     }
     
     /**
      * RESTAURANT_ADMIN specific dashboard.
      */
-    @GetMapping("/restaurant-dashboard")
-    @PreAuthorize("hasRole('RESTAURANT_ADMIN')")
-    public String restaurantDashboard() {
-        return "admin/kitchenlab-admin";
+
+    @GetMapping("/super-dashboard")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public String  superDashboard(Model model) {
+        try {
+            // Get current user
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            String username = auth.getName();
+            
+            // Get current tenant context
+            var currentTenant = TenantContext.getCurrentTenant();
+            boolean isSystemContext = TenantContext.isSystemContext();
+            
+            log.info("Restaurant dashboard accessed by user: {}, tenant: {}, systemContext: {}", 
+                    username, currentTenant, isSystemContext);
+            
+            // Get user details
+            Admin currentUser = adminRepository.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("User not found: " + username));
+            
+            // Get restaurants based on context
+            List<Restaurant> restaurants;
+            if (isSystemContext) {
+                // Super admin can see all restaurants
+                restaurants = restaurantRepository.findAll();
+            } else {
+                // Restaurant admin sees only their restaurant (filtered by tenant context)
+                restaurants = restaurantRepository.findAll();
+            }
+            
+            // Get admins based on context
+            List<Admin> admins;
+            if (isSystemContext) {
+                // Super admin can see all admins
+                admins = adminRepository.findAll();
+            } else if (currentTenant != null) {
+                // Restaurant admin sees only admins from their restaurant
+                admins = adminRepository.findByRestaurantId(currentTenant);
+            } else {
+                admins = List.of();
+            }
+            
+            // Add data to model
+            model.addAttribute("currentUser", currentUser);
+            model.addAttribute("restaurants", restaurants);
+            model.addAttribute("admins", admins);
+            model.addAttribute("currentTenant", currentTenant);
+            model.addAttribute("isSystemContext", isSystemContext);
+            model.addAttribute("tenantInfo", getTenantInfo(currentTenant, isSystemContext));
+            
+            return "admin/tenant-dashboard";
+            
+        } catch (Exception e) {
+            log.error("Error loading restaurant dashboard", e);
+            model.addAttribute("error", "Error loading dashboard: " + e.getMessage());
+            return "admin/tenant-dashboard";
+        }
+    }
+    
+    private String getTenantInfo(UUID currentTenant, boolean isSystemContext) {
+        if (isSystemContext) {
+            return "System Context - Can see all restaurants";
+        } else if (currentTenant != null) {
+            Restaurant restaurant = restaurantRepository.findById(currentTenant).orElse(null);
+            if (restaurant != null) {
+                return "Tenant: " + restaurant.getName() + " (" + restaurant.getSubdomain() + ")";
+            }
+        }
+        return "No tenant context";
     }
     
     /**
