@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manager Dashboard - KitchenLab</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #FF6B35;
+            --secondary: #F7931E;
+            --success: #10B981;
+            --danger: #EF4444;
+            --info: #3B82F6;
+        }
+        
+        .tenant-badge {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        }
+        
+        .role-badge {
+            background: linear-gradient(135deg, var(--info) 0%, #2563EB 100%);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <h1 class="text-xl font-bold text-gray-900">KitchenLab Manager Dashboard</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="text-sm text-gray-600">
+                        <span class="font-medium" th:text="${currentUser.firstName + ' ' + currentUser.lastName}"></span>
+                        <span class="text-gray-400">|</span>
+                        <span class="font-medium" th:text="${currentUser.username}"></span>
+                        <span class="text-gray-400">|</span>
+                        <span class="font-medium text-green-600">MANAGER</span>
+                    </div>
+                    <a href="/auth/logout" class="text-red-600 hover:text-red-800">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Tenant Context Info -->
+    <div class="bg-white border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <span class="text-sm font-medium text-gray-700">Current Context:</span>
+                    <div class="tenant-badge text-white px-3 py-1 rounded-full text-sm">
+                        <i class="fas fa-store mr-2"></i>
+                        <span th:text="${tenantInfo}"></span>
+                    </div>
+                    <div class="role-badge text-white px-3 py-1 rounded-full text-sm">
+                        <i class="fas fa-user-tag mr-2"></i>
+                        <span>Manager - Order and menu management</span>
+                    </div>
+                </div>
+                <div class="text-sm text-gray-500">
+                    <i class="fas fa-database mr-1"></i>
+                    <span th:text="${restaurants.size()}"></span> restaurants | 
+                    <span th:text="${admins.size()}"></span> admins
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Error Message -->
+        <div th:if="${error}" class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-exclamation-triangle text-red-400"></i>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-red-800">Error</h3>
+                    <div class="mt-2 text-sm text-red-700" th:text="${error}"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Manager Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                        <i class="fas fa-store text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Your Restaurant</p>
+                        <p class="text-2xl font-bold text-gray-900" th:text="${restaurants.size()}">1</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-green-100 text-green-600">
+                        <i class="fas fa-shopping-cart text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Orders Today</p>
+                        <p class="text-2xl font-bold text-gray-900">0</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                        <i class="fas fa-utensils text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Menu Items</p>
+                        <p class="text-2xl font-bold text-gray-900">0</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                        <i class="fas fa-chart-line text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Revenue Today</p>
+                        <p class="text-2xl font-bold text-gray-900">$0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Restaurant Info -->
+        <div class="bg-white rounded-lg shadow mb-8">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-medium text-gray-900">
+                    <i class="fas fa-store mr-2"></i>
+                    Your Restaurant
+                </h2>
+            </div>
+            <div class="p-6">
+                <div th:each="restaurant : ${restaurants}" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Restaurant Name</label>
+                            <p class="mt-1 text-sm text-gray-900" th:text="${restaurant.name}">-</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Subdomain</label>
+                            <p class="mt-1 text-sm text-gray-900" th:text="${restaurant.subdomain}">-</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Email</label>
+                            <p class="mt-1 text-sm text-gray-900" th:text="${restaurant.email}">-</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Status</label>
+                            <span th:class="${restaurant.isActive} ? 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800' : 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800'" 
+                                  th:text="${restaurant.isActive} ? 'Active' : 'Inactive'">-</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Description</label>
+                        <p class="mt-1 text-sm text-gray-900" th:text="${restaurant.description}">-</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Management Actions -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white rounded-lg shadow">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">
+                        <i class="fas fa-shopping-cart mr-2"></i>
+                        Order Management
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <p class="text-gray-600 mb-4">Manage orders, view order history, and track order status.</p>
+                    <button class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-list mr-2"></i>View Orders
+                    </button>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">
+                        <i class="fas fa-utensils mr-2"></i>
+                        Menu Management
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <p class="text-gray-600 mb-4">Add, edit, or remove menu items and manage categories.</p>
+                    <button class="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+                        <i class="fas fa-edit mr-2"></i>Manage Menu
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Log tenant context for debugging
+        console.log('Manager Dashboard:', {
+            currentUser: '[[${currentUser.username}]]',
+            role: 'MANAGER',
+            tenantId: '[[${currentTenant}]]',
+            tenantInfo: '[[${tenantInfo}]]',
+            restaurantsCount: '[[${restaurants.size()}]]',
+            adminsCount: '[[${admins.size()}]]'
+        });
+    </script>
+</body>
+</html>

@@ -44,11 +44,9 @@ public class CustomUserDetailsService implements UserDetailsService {
             admin = adminRepository.findByUsername(username)
                     .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
             
-            // Allow SUPER_ADMIN and RESTAURANT_ADMIN in system context
-            if (admin.getRole() != Admin.AdminRole.SUPER_ADMIN && 
-                admin.getRole() != Admin.AdminRole.RESTAURANT_ADMIN) {
-                throw new UsernameNotFoundException("Access denied for user: " + username);
-            }
+            // Allow all admin roles in system context for login
+            // After login, TenantAuthenticationFilter will set proper tenant context
+            log.debug("System context - allowing login for user: {} with role: {}", username, admin.getRole());
         } else {
             throw new IllegalStateException("No tenant context available for authentication");
         }

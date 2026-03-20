@@ -73,8 +73,42 @@ public class AdminDashboardController {
      */
     @GetMapping("/restaurant-dashboard")
     @PreAuthorize("hasRole('RESTAURANT_ADMIN')")
-    public String restaurantDashboard() {
-        return "admin/kitchenlab-admin";
+    public String restaurantDashboard(Model model) {
+        try {
+            // Get current user
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            Admin currentUser = adminRepository.findByUsername(auth.getName())
+                    .orElseThrow(() -> new RuntimeException("User not found: " + auth.getName()));
+            
+            // Get current tenant context (set by TenantAuthenticationFilter)
+            UUID currentTenant = TenantContext.getCurrentTenant();
+            boolean isSystemContext = TenantContext.isSystemContext();
+            
+            log.info("Restaurant dashboard accessed by user: {}, tenant: {}, systemContext: {}", 
+                    currentUser.getUsername(), currentTenant, isSystemContext);
+            
+            // Fetch restaurants (will be filtered by tenant context - should be only 1)
+            List<Restaurant> restaurants = restaurantRepository.findAll();
+            
+            // Fetch admins for this restaurant only
+            List<Admin> admins = adminRepository.findByRestaurantId(currentTenant);
+            
+            // Add data to model for restaurant management
+            model.addAttribute("currentUser", currentUser);
+            model.addAttribute("restaurants", restaurants); // Will be 1 restaurant only
+            model.addAttribute("admins", admins); // Will be restaurant's admins only
+            model.addAttribute("currentTenant", currentTenant);
+            model.addAttribute("isSystemContext", isSystemContext);
+            model.addAttribute("tenantInfo", getTenantInfo(currentTenant, isSystemContext));
+            
+            // For RESTAURANT_ADMIN, use the kitchenlab-admin template for restaurant management
+            return "admin/kitchenlab-admin";
+            
+        } catch (Exception e) {
+            log.error("Error loading restaurant dashboard", e);
+            model.addAttribute("error", "Error loading dashboard: " + e.getMessage());
+            return "admin/kitchenlab-admin";
+        }
     }
     
     /**
@@ -156,8 +190,42 @@ public class AdminDashboardController {
      */
     @GetMapping("/manager-dashboard")
     @PreAuthorize("hasRole('MANAGER')")
-    public String managerDashboard() {
-        return "admin/manager-dashboard";
+    public String managerDashboard(Model model) {
+        try {
+            // Get current user
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            Admin currentUser = adminRepository.findByUsername(auth.getName())
+                    .orElseThrow(() -> new RuntimeException("User not found: " + auth.getName()));
+            
+            // Get current tenant context (set by TenantAuthenticationFilter)
+            UUID currentTenant = TenantContext.getCurrentTenant();
+            boolean isSystemContext = TenantContext.isSystemContext();
+            
+            log.info("Manager dashboard accessed by user: {}, tenant: {}, systemContext: {}", 
+                    currentUser.getUsername(), currentTenant, isSystemContext);
+            
+            // Fetch restaurants (will be filtered by tenant context - should be 1)
+            List<Restaurant> restaurants = restaurantRepository.findAll();
+            
+            // Fetch admins for this restaurant only
+            List<Admin> admins = adminRepository.findByRestaurantId(currentTenant);
+            
+            // Add data to model
+            model.addAttribute("currentUser", currentUser);
+            model.addAttribute("restaurants", restaurants);
+            model.addAttribute("admins", admins);
+            model.addAttribute("currentTenant", currentTenant);
+            model.addAttribute("isSystemContext", isSystemContext);
+            model.addAttribute("tenantInfo", getTenantInfo(currentTenant, isSystemContext));
+            model.addAttribute("roleInfo", "Manager - Order and menu management");
+            
+            return "admin/manager-dashboard";
+            
+        } catch (Exception e) {
+            log.error("Error loading manager dashboard", e);
+            model.addAttribute("error", "Error loading dashboard: " + e.getMessage());
+            return "admin/tenant-dashboard";
+        }
     }
     
     /**
@@ -165,8 +233,42 @@ public class AdminDashboardController {
      */
     @GetMapping("/staff-dashboard")
     @PreAuthorize("hasRole('STAFF')")
-    public String staffDashboard() {
-        return "admin/staff-dashboard";
+    public String staffDashboard(Model model) {
+        try {
+            // Get current user
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            Admin currentUser = adminRepository.findByUsername(auth.getName())
+                    .orElseThrow(() -> new RuntimeException("User not found: " + auth.getName()));
+            
+            // Get current tenant context (set by TenantAuthenticationFilter)
+            UUID currentTenant = TenantContext.getCurrentTenant();
+            boolean isSystemContext = TenantContext.isSystemContext();
+            
+            log.info("Staff dashboard accessed by user: {}, tenant: {}, systemContext: {}", 
+                    currentUser.getUsername(), currentTenant, isSystemContext);
+            
+            // Fetch restaurants (will be filtered by tenant context - should be 1)
+            List<Restaurant> restaurants = restaurantRepository.findAll();
+            
+            // Fetch admins for this restaurant only
+            List<Admin> admins = adminRepository.findByRestaurantId(currentTenant);
+            
+            // Add data to model
+            model.addAttribute("currentUser", currentUser);
+            model.addAttribute("restaurants", restaurants);
+            model.addAttribute("admins", admins);
+            model.addAttribute("currentTenant", currentTenant);
+            model.addAttribute("isSystemContext", isSystemContext);
+            model.addAttribute("tenantInfo", getTenantInfo(currentTenant, isSystemContext));
+            model.addAttribute("roleInfo", "Staff - Order handling only");
+            
+            return "admin/staff-dashboard";
+            
+        } catch (Exception e) {
+            log.error("Error loading staff dashboard", e);
+            model.addAttribute("error", "Error loading dashboard: " + e.getMessage());
+            return "admin/tenant-dashboard";
+        }
     }
     
     /**

@@ -63,6 +63,28 @@ public class SetupController {
                 createAdminUser(sushiRestaurant.getId(), "sushi_admin", "admin123", "admin@sushi.com", "Sushi", "Admin", Admin.AdminRole.RESTAURANT_ADMIN);
             }
 
+            // Create Manager users for each restaurant
+            if (!adminRepository.findByUsername("pizza_manager").isPresent()) {
+                createAdminUser(pizzaRestaurant.getId(), "pizza_manager", "admin123", "manager@pizza.com", "Pizza", "Manager", Admin.AdminRole.MANAGER);
+            }
+            if (!adminRepository.findByUsername("burger_manager").isPresent()) {
+                createAdminUser(burgerRestaurant.getId(), "burger_manager", "admin123", "manager@burger.com", "Burger", "Manager", Admin.AdminRole.MANAGER);
+            }
+            if (!adminRepository.findByUsername("sushi_manager").isPresent()) {
+                createAdminUser(sushiRestaurant.getId(), "sushi_manager", "admin123", "manager@sushi.com", "Sushi", "Manager", Admin.AdminRole.MANAGER);
+            }
+
+            // Create Staff users for each restaurant
+            if (!adminRepository.findByUsername("pizza_staff").isPresent()) {
+                createAdminUser(pizzaRestaurant.getId(), "pizza_staff", "admin123", "staff@pizza.com", "Pizza", "Staff", Admin.AdminRole.STAFF);
+            }
+            if (!adminRepository.findByUsername("burger_staff").isPresent()) {
+                createAdminUser(burgerRestaurant.getId(), "burger_staff", "admin123", "staff@burger.com", "Burger", "Staff", Admin.AdminRole.STAFF);
+            }
+            if (!adminRepository.findByUsername("sushi_staff").isPresent()) {
+                createAdminUser(sushiRestaurant.getId(), "sushi_staff", "admin123", "staff@sushi.com", "Sushi", "Staff", Admin.AdminRole.STAFF);
+            }
+
             return ResponseEntity.ok("""
                 Multi-tenant data created successfully!
                 
@@ -71,9 +93,15 @@ public class SetupController {
                 - Pizza Palace: pizza_admin / admin123 (can only see Pizza Palace)
                 - Burger Barn: burger_admin / admin123 (can only see Burger Barn)  
                 - Sushi Spot: sushi_admin / admin123 (can only see Sushi Spot)
+                - Pizza Manager: pizza_manager / admin123 (Pizza Palace manager)
+                - Burger Manager: burger_manager / admin123 (Burger Barn manager)
+                - Sushi Manager: sushi_manager / admin123 (Sushi Spot manager)
+                - Pizza Staff: pizza_staff / admin123 (Pizza Palace staff)
+                - Burger Staff: burger_staff / admin123 (Burger Barn staff)
+                - Sushi Staff: sushi_staff / admin123 (Sushi Spot staff)
                 
                 Test by logging in at: http://localhost:8080/auth/login
-                Each restaurant admin should only see their own restaurant data.
+                Each user should only see their own restaurant data based on their role.
                 """);
         } catch (Exception e) {
             log.error("Error initializing data", e);
