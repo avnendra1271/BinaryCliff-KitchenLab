@@ -2,6 +2,7 @@ package com.binarycliff.kitchenlab.controller;
 
 import com.binarycliff.kitchenlab.auth.entity.Admin;
 import com.binarycliff.kitchenlab.auth.repository.AdminRepository;
+import com.binarycliff.kitchenlab.auth.service.RoleBasedAuthorizationService;
 import com.binarycliff.kitchenlab.tenant.context.TenantContext;
 import com.binarycliff.kitchenlab.tenant.entity.Restaurant;
 import com.binarycliff.kitchenlab.tenant.repository.RestaurantRepository;
@@ -30,6 +31,7 @@ public class AdminDashboardController {
     
     private final AdminRepository adminRepository;
     private final RestaurantRepository restaurantRepository;
+    private final RoleBasedAuthorizationService authorizationService;
     
     /**
      * Route to appropriate dashboard based on user role.
@@ -69,7 +71,8 @@ public class AdminDashboardController {
     }
     
     /**
-     * SUPER_ADMIN specific dashboard.
+     * RESTAURANT_ADMIN specific dashboard - Restaurant Owner with single restaurant scope.
+     * Responsibilities: Restaurant management, staff management, menu control, financial reports.
      */
     @GetMapping("/restaurant-dashboard")
     @PreAuthorize("hasRole('RESTAURANT_ADMIN')")
@@ -87,19 +90,39 @@ public class AdminDashboardController {
             log.info("Restaurant dashboard accessed by user: {}, tenant: {}, systemContext: {}", 
                     currentUser.getUsername(), currentTenant, isSystemContext);
             
-            // Fetch restaurants (will be filtered by tenant context - should be only 1)
-            List<Restaurant> restaurants = restaurantRepository.findAll();
+            // Fetch restaurants based on context
+            List<Restaurant> restaurants;
+            if (isSystemContext) {
+                // Super admin can see all restaurants
+                restaurants = restaurantRepository.findAll();
+            } else if (currentTenant != null) {
+                // Restaurant users see only their restaurant
+                Restaurant restaurant = restaurantRepository.findById(currentTenant).orElse(null);
+                restaurants = restaurant != null ? List.of(restaurant) : List.of();
+            } else {
+                restaurants = List.of();
+            }
             
             // Fetch admins for this restaurant only
             List<Admin> admins = adminRepository.findByRestaurantId(currentTenant);
             
-            // Add data to model for restaurant management
+            // Add data to model for restaurant management with role-based permissions
             model.addAttribute("currentUser", currentUser);
             model.addAttribute("restaurants", restaurants); // Will be 1 restaurant only
             model.addAttribute("admins", admins); // Will be restaurant's admins only
             model.addAttribute("currentTenant", currentTenant);
             model.addAttribute("isSystemContext", isSystemContext);
             model.addAttribute("tenantInfo", getTenantInfo(currentTenant, isSystemContext));
+            
+            // Add role-specific permissions and information
+            model.addAttribute("userAccessScope", authorizationService.getUserAccessScope(currentUser));
+            model.addAttribute("userResponsibilities", authorizationService.getUserResponsibilities(currentUser));
+            model.addAttribute("canManageRestaurantStaff", authorizationService.canManageRestaurantStaff(currentUser, currentTenant));
+            model.addAttribute("canAccessFinancialReports", authorizationService.canAccessFinancialReports(currentUser));
+            model.addAttribute("canManageMenu", authorizationService.canManageMenu(currentUser));
+            model.addAttribute("canManageOrders", authorizationService.canManageOrders(currentUser));
+            model.addAttribute("canViewMenu", authorizationService.canViewMenu(currentUser));
+            model.addAttribute("roleInfo", "Restaurant Owner - Single restaurant management");
             
             // For RESTAURANT_ADMIN, use the kitchenlab-admin template for restaurant management
             return "admin/kitchenlab-admin";
@@ -112,12 +135,13 @@ public class AdminDashboardController {
     }
     
     /**
-     * RESTAURANT_ADMIN specific dashboard.
+     * SUPER_ADMIN specific dashboard - Platform Owner with global scope.
+     * Responsibilities: Multi-tenant control, user management, platform configuration.
      */
 
     @GetMapping("/super-dashboard")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public String  superDashboard(Model model) {
+    public String superDashboard(Model model) {
         try {
             // Get current user
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -156,13 +180,23 @@ public class AdminDashboardController {
                 admins = List.of();
             }
             
-            // Add data to model
+            // Add data to model with role-based permissions
             model.addAttribute("currentUser", currentUser);
             model.addAttribute("restaurants", restaurants);
             model.addAttribute("admins", admins);
             model.addAttribute("currentTenant", currentTenant);
             model.addAttribute("isSystemContext", isSystemContext);
             model.addAttribute("tenantInfo", getTenantInfo(currentTenant, isSystemContext));
+            
+            // Add role-specific permissions and information
+            model.addAttribute("userAccessScope", authorizationService.getUserAccessScope(currentUser));
+            model.addAttribute("userResponsibilities", authorizationService.getUserResponsibilities(currentUser));
+            model.addAttribute("canManageRestaurants", authorizationService.canManageRestaurants(currentUser));
+            model.addAttribute("canManagePlatformUsers", authorizationService.canManagePlatformUsers(currentUser));
+            model.addAttribute("canAccessFinancialReports", authorizationService.canAccessFinancialReports(currentUser));
+            model.addAttribute("canAccessSystemSettings", authorizationService.canAccessSystemSettings(currentUser));
+            model.addAttribute("canDeleteCriticalData", authorizationService.canDeleteCriticalData(currentUser));
+            model.addAttribute("roleInfo", "Platform Owner - Multi-tenant control");
             
             return "admin/tenant-dashboard";
             
@@ -186,7 +220,8 @@ public class AdminDashboardController {
     }
     
     /**
-     * MANAGER specific dashboard.
+     * MANAGER specific dashboard - Operations Head with restaurant-level limited control.
+     * Responsibilities: Daily operations, order management, task assignment, limited reports.
      */
     @GetMapping("/manager-dashboard")
     @PreAuthorize("hasRole('MANAGER')")
@@ -204,20 +239,41 @@ public class AdminDashboardController {
             log.info("Manager dashboard accessed by user: {}, tenant: {}, systemContext: {}", 
                     currentUser.getUsername(), currentTenant, isSystemContext);
             
-            // Fetch restaurants (will be filtered by tenant context - should be 1)
-            List<Restaurant> restaurants = restaurantRepository.findAll();
+            // Fetch restaurants based on context
+            List<Restaurant> restaurants;
+            if (isSystemContext) {
+                // Super admin can see all restaurants
+                restaurants = restaurantRepository.findAll();
+            } else if (currentTenant != null) {
+                // Restaurant users see only their restaurant
+                Restaurant restaurant = restaurantRepository.findById(currentTenant).orElse(null);
+                restaurants = restaurant != null ? List.of(restaurant) : List.of();
+            } else {
+                restaurants = List.of();
+            }
             
             // Fetch admins for this restaurant only
             List<Admin> admins = adminRepository.findByRestaurantId(currentTenant);
             
-            // Add data to model
+            // Add data to model with role-based permissions
             model.addAttribute("currentUser", currentUser);
             model.addAttribute("restaurants", restaurants);
             model.addAttribute("admins", admins);
             model.addAttribute("currentTenant", currentTenant);
             model.addAttribute("isSystemContext", isSystemContext);
             model.addAttribute("tenantInfo", getTenantInfo(currentTenant, isSystemContext));
-            model.addAttribute("roleInfo", "Manager - Order and menu management");
+            
+            // Add role-specific permissions and information
+            model.addAttribute("userAccessScope", authorizationService.getUserAccessScope(currentUser));
+            model.addAttribute("userResponsibilities", authorizationService.getUserResponsibilities(currentUser));
+            model.addAttribute("canManageOrders", authorizationService.canManageOrders(currentUser));
+            model.addAttribute("canManageMenu", authorizationService.canManageMenu(currentUser));
+            model.addAttribute("canViewMenu", authorizationService.canViewMenu(currentUser));
+            model.addAttribute("canAssignTasks", authorizationService.canAssignTasks(currentUser));
+            model.addAttribute("canAccessInventory", authorizationService.canAccessInventory(currentUser));
+            model.addAttribute("canAccessReports", authorizationService.canAccessReports(currentUser));
+            model.addAttribute("canAccessFinancialReports", authorizationService.canAccessFinancialReports(currentUser)); // Will be false for MANAGER
+            model.addAttribute("roleInfo", "Operations Head - Restaurant-level limited control");
             
             return "admin/manager-dashboard";
             
@@ -229,7 +285,8 @@ public class AdminDashboardController {
     }
     
     /**
-     * STAFF specific dashboard.
+     * STAFF specific dashboard - Execution Role with operational only scope.
+     * Responsibilities: Order handling, task execution, limited menu access, status updates.
      */
     @GetMapping("/staff-dashboard")
     @PreAuthorize("hasRole('STAFF')")
@@ -247,20 +304,41 @@ public class AdminDashboardController {
             log.info("Staff dashboard accessed by user: {}, tenant: {}, systemContext: {}", 
                     currentUser.getUsername(), currentTenant, isSystemContext);
             
-            // Fetch restaurants (will be filtered by tenant context - should be 1)
-            List<Restaurant> restaurants = restaurantRepository.findAll();
+            // Fetch restaurants based on context
+            List<Restaurant> restaurants;
+            if (isSystemContext) {
+                // Super admin can see all restaurants
+                restaurants = restaurantRepository.findAll();
+            } else if (currentTenant != null) {
+                // Restaurant users see only their restaurant
+                Restaurant restaurant = restaurantRepository.findById(currentTenant).orElse(null);
+                restaurants = restaurant != null ? List.of(restaurant) : List.of();
+            } else {
+                restaurants = List.of();
+            }
             
             // Fetch admins for this restaurant only
             List<Admin> admins = adminRepository.findByRestaurantId(currentTenant);
             
-            // Add data to model
+            // Add data to model with role-based permissions
             model.addAttribute("currentUser", currentUser);
             model.addAttribute("restaurants", restaurants);
             model.addAttribute("admins", admins);
             model.addAttribute("currentTenant", currentTenant);
             model.addAttribute("isSystemContext", isSystemContext);
             model.addAttribute("tenantInfo", getTenantInfo(currentTenant, isSystemContext));
-            model.addAttribute("roleInfo", "Staff - Order handling only");
+            
+            // Add role-specific permissions and information
+            model.addAttribute("userAccessScope", authorizationService.getUserAccessScope(currentUser));
+            model.addAttribute("userResponsibilities", authorizationService.getUserResponsibilities(currentUser));
+            model.addAttribute("canManageOrders", authorizationService.canManageOrders(currentUser));
+            model.addAttribute("canViewMenu", authorizationService.canViewMenu(currentUser));
+            model.addAttribute("canAccessReports", authorizationService.canAccessReports(currentUser)); // Will be false for STAFF
+            model.addAttribute("canAccessFinancialReports", authorizationService.canAccessFinancialReports(currentUser)); // Will be false for STAFF
+            model.addAttribute("canManageMenu", authorizationService.canManageMenu(currentUser)); // Will be false for STAFF
+            model.addAttribute("canAssignTasks", authorizationService.canAssignTasks(currentUser)); // Will be false for STAFF
+            model.addAttribute("canAccessInventory", authorizationService.canAccessInventory(currentUser)); // Will be false for STAFF
+            model.addAttribute("roleInfo", "Execution Role - Operational only");
             
             return "admin/staff-dashboard";
             

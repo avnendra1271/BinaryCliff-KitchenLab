@@ -59,9 +59,9 @@ public class TenantAuthenticationFilter implements Filter {
             
             chain.doFilter(request, response);
             
-        } finally {
-            // Always clear tenant context after request
-            TenantContext.clear();
+        } catch (Exception e) {
+            log.error("Error in TenantAuthenticationFilter", e);
+            throw new ServletException(e);
         }
     }
 }
